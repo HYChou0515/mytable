@@ -8,6 +8,8 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
     accessorKey: "id",
     cell: (info) => info.getValue(),
     footer: (info) => info.column.id,
+    enableGrouping: false,
+    aggregationFn: undefined,
   },
   {
     accessorKey: "type",
@@ -28,6 +30,8 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
     accessorKey: "score",
     header: "Score",
     footer: (info) => info.column.id,
+    enableGrouping: false,
+    aggregationFn: "max",
   },
 ];
 

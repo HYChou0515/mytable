@@ -37,3 +37,7 @@ tfoot {
 tfoot th {
   font-weight: normal;
 }
+
+.row-group .row-agg .row-placeholder .row-default {
+  background-color: white;
+}

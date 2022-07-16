@@ -12,13 +12,24 @@ import {
   getFacetedMinMaxValues,
   getPaginationRowModel,
   sortingFns,
+  getExpandedRowModel,
   getSortedRowModel,
+  GroupingState,
+  getGroupedRowModel,
   FilterFn,
   SortingFn,
   ColumnDef,
   flexRender,
 } from "@tanstack/react-table";
-import { FaArrowUp, FaArrowDown } from "react-icons/fa";
+import {
+  FaArrowUp,
+  FaArrowDown,
+  FaAngleDown,
+  FaAngleRight,
+} from "react-icons/fa";
+import { VscListTree } from "react-icons/vsc";
+import { GrClose } from "react-icons/gr";
+
 import {
   RankingInfo,
   rankItem,
@@ -35,6 +46,9 @@ import {
 // [ ] 7. group by distribution
 // [ ] 8. pagination
 // [ ] 9. re-ranking (after filtering, click this to re-rank)
+
+const GroupIcon: React.FC = () => <VscListTree />;
+const CloseIcon: React.FC = () => <GrClose />;
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -173,6 +187,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     []
   );
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [grouping, setGrouping] = React.useState<GroupingState>([]);
 
   const table = useReactTable({
     data,
@@ -180,6 +195,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     state: {
       columnFilters,
       globalFilter,
+      grouping,
     },
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
@@ -191,9 +207,12 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
+    onGroupingChange: setGrouping,
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     debugTable: true,
     debugHeaders: true,
-    debugColumns: false,
+    debugColumns: true,
   });
 
   return (
@@ -216,23 +235,49 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
                   <th key={header.id} colSpan={header.colSpan}>
                     {header.isPlaceholder ? null : (
                       <>
-                        <div
-                          {...{
-                            className: header.column.getCanSort()
-                              ? "cursor-pointer select-none"
-                              : "",
-                            onClick: header.column.getToggleSortingHandler(),
+                        <section
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
                           }}
                         >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                          {{
-                            asc: <FaArrowUp />,
-                            desc: <FaArrowDown />,
-                          }[header.column.getIsSorted() as string] ?? null}
-                        </div>
+                          <div
+                            {...{
+                              className: header.column.getCanSort()
+                                ? "cursor-pointer select-none"
+                                : "",
+                              onClick: header.column.getToggleSortingHandler(),
+                            }}
+                            style={{ flex: 1, textAlign: "left" }}
+                          >
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                            {{
+                              asc: <FaArrowUp />,
+                              desc: <FaArrowDown />,
+                            }[header.column.getIsSorted() as string] ?? null}
+                          </div>
+                          {header.column.getCanGroup() ? (
+                            // If the header can be grouped, let's add a toggle
+                            <button
+                              {...{
+                                onClick:
+                                  header.column.getToggleGroupingHandler(),
+                                style: {
+                                  cursor: "pointer",
+                                },
+                              }}
+                            >
+                              {header.column.getIsGrouped() ? (
+                                <CloseIcon />
+                              ) : (
+                                <GroupIcon />
+                              )}
+                            </button>
+                          ) : null}{" "}
+                        </section>
                         {header.column.getCanFilter() ? (
                           <div>
                             <Filter column={header.column} table={table} />
@@ -252,10 +297,60 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
               <tr key={row.id}>
                 {row.getVisibleCells().map((cell) => {
                   return (
-                    <td key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
+                    <td
+                      {...{
+                        key: cell.id,
+                        className: cell.getIsGrouped()
+                          ? "row-group"
+                          : cell.getIsAggregated()
+                          ? "row-agg"
+                          : cell.getIsPlaceholder()
+                          ? "row-placeholder"
+                          : "row-default",
+                      }}
+                    >
+                      {cell.getIsGrouped() ? (
+                        <>
+                          <section style={{ display: "flex" }}>
+                            <button
+                              {...{
+                                onClick: row.getToggleExpandedHandler(),
+                                style: {
+                                  cursor: row.getCanExpand()
+                                    ? "pointer"
+                                    : "normal",
+                                },
+                              }}
+                            >
+                              {row.getIsExpanded() ? (
+                                <FaAngleDown />
+                              ) : (
+                                <FaAngleRight />
+                              )}
+                            </button>
+                            <div>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}{" "}
+                              ({row.subRows.length})
+                            </div>
+                          </section>
+                        </>
+                      ) : cell.getIsAggregated() ? (
+                        // If the cell is aggregated, use the Aggregated
+                        // renderer for cell
+                        flexRender(
+                          cell.column.columnDef.aggregatedCell ??
+                            cell.column.columnDef.cell,
+                          cell.getContext()
+                        )
+                      ) : cell.getIsPlaceholder() ? null : ( // For cells with repeated values, render null
+                        // Otherwise, just render the regular cell
+                        flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )
                       )}
                     </td>
                   );
