@@ -14,6 +14,7 @@ code {
 html {
   font-family: sans-serif;
   font-size: 14px;
+  background-color: antiquewhite;
 }
 
 table {
@@ -40,4 +41,30 @@ tfoot th {
 
 .row-group .row-agg .row-placeholder .row-default {
   background-color: white;
+}
+
+button.myui {
+  display: inline-block;
+  background-color: #0000;
+  border: none;
+  padding: 0;
+  text-decoration: none;
+  font-family: "Roboto", sans-serif;
+  font-weight: 300;
+  color: #282828;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+button.myui:hover {
+  color: #46f;
+}
+button.myui-clicked {
+  color: #46f;
+}
+@media all and (max-width: 30em) {
+  button.myui {
+    display: block;
+    margin: 0.4em auto;
+  }
 }

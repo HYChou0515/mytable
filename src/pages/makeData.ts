@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import * as _ from "lodash";
 
 export type RootCauseItemBody = {
-  id: number;
+  index: number;
   type: string;
   ope_no: string;
   factor: string;
@@ -57,7 +57,7 @@ const makeData = (len: number) => {
         faker.random.alphaNumeric(1, { casing: "upper" });
     }
     data.push({
-      id: i,
+      index: i,
       type: type,
       ope_no: faker.helpers.arrayElement(openoList),
       factor: factor,

@@ -1,8 +1,15 @@
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  ReactElement,
+  useContext,
+  useState,
+} from "react";
 import makeData, { RootCauseItemBody } from "./makeData";
+import { faker } from "@faker-js/faker";
 import DataGrid from "../components/DataGrid";
 import { ColumnDef } from "@tanstack/react-table";
 import { Popover, PopoverAlign } from "react-tiny-popover";
+import { BiBarChartSquare } from "react-icons/bi";
 
 type PopoverHoverProps = {
   initOpen?: boolean;
@@ -50,27 +57,30 @@ type PopoverHoverState = {
   clickOpen?: boolean;
 };
 type RowStates = {
-  states: { [id: string]: PopoverHoverState };
-  setState: (id: string, newState: PopoverHoverState) => void;
+  states: { [rowId: string]: PopoverHoverState };
+  setState: (rowId: string, newState: PopoverHoverState) => void;
+  plots: { [rowId: string]: string };
 };
 const PlotPopoverHoverContext = createContext<RowStates>({
   states: {},
   setState: () => false,
+  plots: {},
 });
 
 type PlotPopoverHoverProps = {
-  id: string;
+  rowId: string;
 };
 const PlotPopoverHover: React.FC<PlotPopoverHoverProps> = (props) => {
-  const { states, setState } = useContext(PlotPopoverHoverContext) ?? {
+  const { states, setState, plots } = useContext(PlotPopoverHoverContext) ?? {
     state: {},
     setState: () => false,
+    plots: {},
   };
-  const state = states[props.id] ?? {};
+  const state = states[props.rowId] ?? {};
   const [hoverOpen, setHoverOpen] = React.useState(false);
   const clickOpen = state.clickOpen ?? false;
   const setClickOpen = (c: boolean) =>
-    setState(props.id, { ...state, clickOpen: c });
+    setState(props.rowId, { ...state, clickOpen: c });
   return (
     <Popover
       isOpen={hoverOpen || clickOpen}
@@ -83,32 +93,25 @@ const PlotPopoverHover: React.FC<PlotPopoverHoverProps> = (props) => {
         { position, nudgedLeft, nudgedTop } // you can also provide a render function that injects some useful stuff!
       ) => (
         <div>
-          <div>
-            Hi! I'm popover content. Here's my current position: {position}.
-          </div>
-          <div>
-            I'm {` ${nudgedLeft} `} pixels beyond my boundary horizontally!
-          </div>
-          <div>
-            I'm {` ${nudgedTop} `} pixels beyond my boundary vertically!
-          </div>
+          <img src={plots[props.rowId]} />
         </div>
       )}
     >
-      <div
+      <button
+        className={`myui ${clickOpen ? "myui-clicked" : ""}`}
         onClick={() => setClickOpen(!clickOpen)}
         onMouseOver={() => setHoverOpen(true)}
         onMouseLeave={() => setHoverOpen(false)}
       >
-        Click me!
-      </div>
+        <BiBarChartSquare />
+      </button>
     </Popover>
   );
 };
 
 const dataColumns: ColumnDef<RootCauseItemBody>[] = [
   {
-    accessorKey: "id",
+    accessorKey: "index",
     cell: (info) => info.getValue(),
     footer: (info) => info.column.id,
     enableGrouping: false,
@@ -142,26 +145,32 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
     enableGrouping: false,
     cell: (props) => (
       <span>
-        <PlotPopoverHover id={props.cell.id} />
+        <PlotPopoverHover rowId={props.row.id} />
       </span>
     ),
   },
 ];
 
-const DataContext = createContext(makeData(500));
+const DataContext = createContext(makeData(20));
 
 const DataReport: React.FC = () => {
   const data = useContext(DataContext);
-  const [states, setStates] = useState<{ [id: string]: PopoverHoverState }>(
-    data.reduce((a, v) => ({ ...a, [v.id]: v }), {})
+  const [plots] = useState(
+    data.reduce(
+      (a, v, rowId) => ({ ...a, [rowId]: faker.image.cats(300, 300, true) }),
+      {}
+    )
   );
-  const setIdState = (id: string, state: PopoverHoverState) => {
-    setStates({ ...states, [id]: state });
+  const [states, setStates] = useState<{ [rowId: string]: PopoverHoverState }>(
+    data.reduce((a, v, rowId) => ({ ...a, [rowId]: v }), {})
+  );
+  const setIdState = (rowId: string, state: PopoverHoverState) => {
+    setStates({ ...states, [rowId]: state });
   };
 
   return (
     <PlotPopoverHoverContext.Provider
-      value={{ states: states, setState: setIdState }}
+      value={{ states, setState: setIdState, plots }}
     >
       <DataGrid<RootCauseItemBody>
         data={data}
