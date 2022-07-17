@@ -16,6 +16,7 @@ import {
   getSortedRowModel,
   GroupingState,
   getGroupedRowModel,
+  PaginationState,
   FilterFn,
   SortingFn,
   ColumnDef,
@@ -38,13 +39,13 @@ import {
 
 // Objectives
 // [V] 1. show data in data grid
-// [ ] 2. filter at column header
+// [V] 2. filter at column header
 // [ ] 3. combine multiple columns to one (as summary)
 // [ ] 4. show image in a popover
 // [ ] 5. score bar
-// [ ] 6. group by columns
+// [V] 6. group by columns
 // [ ] 7. group by distribution
-// [ ] 8. pagination
+// [V] 8. pagination
 // [ ] 9. re-ranking (after filtering, click this to re-rank)
 
 const GroupIcon: React.FC = () => <VscListTree />;
@@ -174,11 +175,11 @@ function DebouncedInput({
   );
 }
 
-interface DataGridProps<ObjT> {
+type DataGridProps<ObjT> = {
   data: ObjT[];
   columns: ColumnDef<ObjT>[];
-  pageOptions?: number[];
-}
+  pageOptions?: number[] | "one-page";
+};
 function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   const data = props.data;
   const columns = props.columns;
@@ -188,7 +189,10 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   );
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [grouping, setGrouping] = React.useState<GroupingState>([]);
-
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: pageOptions === "one-page" ? data.length : pageOptions[0],
+  });
   const table = useReactTable({
     data,
     columns,
@@ -196,6 +200,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
       columnFilters,
       globalFilter,
       grouping,
+      pagination,
     },
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
@@ -208,6 +213,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
     onGroupingChange: setGrouping,
+    onPaginationChange: setPagination,
     getGroupedRowModel: getGroupedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     debugTable: true,
@@ -248,7 +254,11 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
                                 : "",
                               onClick: header.column.getToggleSortingHandler(),
                             }}
-                            style={{ flex: 1, textAlign: "left" }}
+                            style={{
+                              flex: 1,
+                              textAlign: "left",
+                              cursor: "pointer",
+                            }}
                           >
                             {flexRender(
                               header.column.columnDef.header,
@@ -361,67 +371,69 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
         </tbody>
       </table>
       <div className="h-2" />
-      <div className="flex items-center gap-2">
-        <button
-          className="border rounded p-1"
-          onClick={() => table.setPageIndex(0)}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {"<<"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {"<"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          {">"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-          disabled={!table.getCanNextPage()}
-        >
-          {">>"}
-        </button>
-        <span className="flex items-center gap-1">
-          <div>Page</div>
-          <strong>
-            {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </strong>
-        </span>
-        <span className="flex items-center gap-1">
-          | Go to page:
-          <input
-            type="number"
-            defaultValue={table.getState().pagination.pageIndex + 1}
+      {pageOptions === "one-page" ? null : (
+        <div className="flex items-center gap-2">
+          <button
+            className="border rounded p-1"
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
+          >
+            {"<<"}
+          </button>
+          <button
+            className="border rounded p-1"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            {"<"}
+          </button>
+          <button
+            className="border rounded p-1"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            {">"}
+          </button>
+          <button
+            className="border rounded p-1"
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+          >
+            {">>"}
+          </button>
+          <span className="flex items-center gap-1">
+            <div>Page</div>
+            <strong>
+              {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
+            </strong>
+          </span>
+          <span className="flex items-center gap-1">
+            | Go to page:
+            <input
+              type="number"
+              defaultValue={table.getState().pagination.pageIndex + 1}
+              onChange={(e) => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                table.setPageIndex(page);
+              }}
+              className="border p-1 rounded w-16"
+            />
+          </span>
+          <select
+            value={table.getState().pagination.pageSize}
             onChange={(e) => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0;
-              table.setPageIndex(page);
+              table.setPageSize(Number(e.target.value));
             }}
-            className="border p-1 rounded w-16"
-          />
-        </span>
-        <select
-          value={table.getState().pagination.pageSize}
-          onChange={(e) => {
-            table.setPageSize(Number(e.target.value));
-          }}
-        >
-          {pageOptions.map((pageSize) => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
-      </div>
+          >
+            {pageOptions.map((pageSize) => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div>{table.getPrePaginationRowModel().rows.length} Rows</div>
       {/*<div>*/}
       {/*  <button onClick={() => rerender()}>Force Rerender</button>*/}

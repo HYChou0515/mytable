@@ -20,6 +20,7 @@ const makeData = (len: number) => {
 
   const toolTypes: string[] = [];
   const rcpTypes: string[] = [];
+  const openoList: string[] = [];
 
   for (const i of _.range(50)) {
     toolTypes.push(faker.random.alphaNumeric(6, { casing: "upper" }));
@@ -29,6 +30,10 @@ const makeData = (len: number) => {
     rcpTypes.push(
       faker.random.alphaNumeric(getRandomInt(10, 20), { casing: "upper" })
     );
+  }
+
+  for (const i of _.range(100)) {
+    openoList.push(faker.finance.amount(100, 10000, 3));
   }
 
   for (const i of _.range(len)) {
@@ -54,7 +59,7 @@ const makeData = (len: number) => {
     data.push({
       id: i,
       type: type,
-      ope_no: faker.finance.amount(100, 10000, 3),
+      ope_no: faker.helpers.arrayElement(openoList),
       factor: factor,
       score: Number(faker.finance.amount(0, 100, 2)),
     });
