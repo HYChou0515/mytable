@@ -10,6 +10,7 @@ import DataGrid from "../components/DataGrid";
 import { ColumnDef } from "@tanstack/react-table";
 import { Popover, PopoverAlign } from "react-tiny-popover";
 import { BiBarChartSquare } from "react-icons/bi";
+import { Facebook, Ring, Spinner } from "../components/Loading";
 
 type PopoverHoverProps = {
   initOpen?: boolean;
@@ -81,6 +82,7 @@ const PlotPopoverHover: React.FC<PlotPopoverHoverProps> = (props) => {
   const clickOpen = state.clickOpen ?? false;
   const setClickOpen = (c: boolean) =>
     setState(props.rowId, { ...state, clickOpen: c });
+  const [isLoaded, setIsLoaded] = useState(false);
   return (
     <Popover
       isOpen={hoverOpen || clickOpen}
@@ -88,12 +90,16 @@ const PlotPopoverHover: React.FC<PlotPopoverHoverProps> = (props) => {
       align={"start"}
       padding={10} // adjust padding here!
       reposition={true} // prevents automatic readjustment of content position that keeps your popover content within its parent's bounds
-      // onClickOutside={() => setClickOpen(false)} // handle click events outside of the popover/target here!
       content={(
         { position, nudgedLeft, nudgedTop } // you can also provide a render function that injects some useful stuff!
       ) => (
         <div>
-          <img src={plots[props.rowId]} />
+          <img
+            onLoad={() => setIsLoaded(true)}
+            src={plots[props.rowId]}
+            alt="plot"
+          />
+          {isLoaded ? null : <Spinner />}
         </div>
       )}
     >
@@ -103,7 +109,7 @@ const PlotPopoverHover: React.FC<PlotPopoverHoverProps> = (props) => {
         onMouseOver={() => setHoverOpen(true)}
         onMouseLeave={() => setHoverOpen(false)}
       >
-        <BiBarChartSquare />
+        <BiBarChartSquare style={{ transform: "scale(2,2)" }} />
       </button>
     </Popover>
   );
@@ -151,7 +157,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
   },
 ];
 
-const DataContext = createContext(makeData(20));
+const DataContext = createContext(makeData(200));
 
 const DataReport: React.FC = () => {
   const data = useContext(DataContext);
