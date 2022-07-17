@@ -330,6 +330,9 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
                             : cell.getIsPlaceholder()
                             ? "row-placeholder"
                             : "row-default",
+                          style: {
+                            width: cell.column.getSize(),
+                          },
                         }}
                       >
                         {cell.getIsGrouped() ? (

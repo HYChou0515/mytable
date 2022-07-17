@@ -96,17 +96,17 @@ td {
   }
 }
 
-/*table tbody {*/
-/*  display: block;*/
-/*  max-height: 450px;*/
-/*  overflow-y: scroll;*/
-/*}*/
-/*table thead,*/
-/*table tbody tr {*/
-/*  display: table;*/
-/*  width: 100%;*/
-/*  table-layout: fixed;*/
-/*}*/
+table tbody {
+  display: block;
+  max-height: 450px;
+  overflow-y: scroll;
+}
+table thead,
+table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
 
 .row-group .row-agg .row-placeholder .row-default {
   background-color: white;
