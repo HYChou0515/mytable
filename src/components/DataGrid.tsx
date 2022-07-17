@@ -196,6 +196,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   const table = useReactTable({
     data,
     columns,
+    columnResizeMode: "onChange",
     state: {
       columnFilters,
       globalFilter,
@@ -232,13 +233,17 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
         />
       </div>
       <div className="h-2" />
-      <table>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <th key={header.id} colSpan={header.colSpan}>
+      <div style={{ maxWidth: "1000px" }}>
+        <table style={{ width: table.getCenterTotalSize() }}>
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    style={{ width: header.getSize() }}
+                  >
                     {header.isPlaceholder ? null : (
                       <>
                         <section
@@ -295,81 +300,90 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
                         ) : null}
                       </>
                     )}
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => {
-            return (
-              <tr key={row.id}>
-                {row.getVisibleCells().map((cell) => {
-                  return (
-                    <td
+                    <div
                       {...{
-                        key: cell.id,
-                        className: cell.getIsGrouped()
-                          ? "row-group"
-                          : cell.getIsAggregated()
-                          ? "row-agg"
-                          : cell.getIsPlaceholder()
-                          ? "row-placeholder"
-                          : "row-default",
+                        onMouseDown: header.getResizeHandler(),
+                        onTouchStart: header.getResizeHandler(),
+                        className: `resizer ${
+                          header.column.getIsResizing() ? "isResizing" : ""
+                        }`,
                       }}
-                    >
-                      {cell.getIsGrouped() ? (
-                        <>
-                          <section style={{ display: "flex" }}>
-                            <button
-                              {...{
-                                onClick: row.getToggleExpandedHandler(),
-                                style: {
-                                  cursor: row.getCanExpand()
-                                    ? "pointer"
-                                    : "normal",
-                                },
-                              }}
-                            >
-                              {row.getIsExpanded() ? (
-                                <FaAngleDown />
-                              ) : (
-                                <FaAngleRight />
-                              )}
-                            </button>
-                            <div>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}{" "}
-                              ({row.subRows.length})
-                            </div>
-                          </section>
-                        </>
-                      ) : cell.getIsAggregated() ? (
-                        // If the cell is aggregated, use the Aggregated
-                        // renderer for cell
-                        flexRender(
-                          cell.column.columnDef.aggregatedCell ??
-                            cell.column.columnDef.cell,
-                          cell.getContext()
-                        )
-                      ) : cell.getIsPlaceholder() ? null : ( // For cells with repeated values, render null
-                        // Otherwise, just render the regular cell
-                        flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )
-                      )}
-                    </td>
-                  );
-                })}
+                    />
+                  </th>
+                ))}
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row) => {
+              return (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map((cell) => {
+                    return (
+                      <td
+                        {...{
+                          key: cell.id,
+                          className: cell.getIsGrouped()
+                            ? "row-group"
+                            : cell.getIsAggregated()
+                            ? "row-agg"
+                            : cell.getIsPlaceholder()
+                            ? "row-placeholder"
+                            : "row-default",
+                        }}
+                      >
+                        {cell.getIsGrouped() ? (
+                          <>
+                            <section style={{ display: "flex" }}>
+                              <button
+                                {...{
+                                  onClick: row.getToggleExpandedHandler(),
+                                  style: {
+                                    cursor: row.getCanExpand()
+                                      ? "pointer"
+                                      : "normal",
+                                  },
+                                }}
+                              >
+                                {row.getIsExpanded() ? (
+                                  <FaAngleDown />
+                                ) : (
+                                  <FaAngleRight />
+                                )}
+                              </button>
+                              <div>
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}{" "}
+                                ({row.subRows.length})
+                              </div>
+                            </section>
+                          </>
+                        ) : cell.getIsAggregated() ? (
+                          // If the cell is aggregated, use the Aggregated
+                          // renderer for cell
+                          flexRender(
+                            cell.column.columnDef.aggregatedCell ??
+                              cell.column.columnDef.cell,
+                            cell.getContext()
+                          )
+                        ) : cell.getIsPlaceholder() ? null : ( // For cells with repeated values, render null
+                          // Otherwise, just render the regular cell
+                          flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
       <div className="h-2" />
       {pageOptions === "one-page" ? null : (
         <div className="flex items-center gap-2">

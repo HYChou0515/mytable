@@ -178,6 +178,9 @@ const DataReport: React.FC = () => {
     <PlotPopoverHoverContext.Provider
       value={{ states, setState: setIdState, plots }}
     >
+      <div>
+        <p>{faker.lorem.paragraphs()}</p>
+      </div>
       <DataGrid<RootCauseItemBody>
         data={data}
         columns={dataColumns}
