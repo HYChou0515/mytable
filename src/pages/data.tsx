@@ -122,21 +122,28 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
     footer: (info) => info.column.id,
     enableGrouping: false,
     aggregationFn: undefined,
+    size: 60,
+    minSize: 30,
   },
   {
     accessorKey: "type",
     header: () => "type",
     footer: (info) => info.column.id,
+    size: 90,
+    minSize: 30,
   },
   {
     accessorKey: "ope_no",
     header: () => "OPE_NO",
     footer: (info) => info.column.id,
+    size: 90,
+    minSize: 30,
   },
   {
     accessorKey: "factor",
     header: "Factor",
     footer: (info) => info.column.id,
+    size: 500,
   },
   {
     accessorKey: "score",
@@ -145,6 +152,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
     enableGrouping: false,
     aggregationFn: "max",
     aggregatedCell: (props) => <span>max: {props.renderValue()}</span>,
+    size: 90,
   },
   {
     header: " ",
@@ -154,6 +162,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
         <PlotPopoverHover rowId={props.row.id} />
       </span>
     ),
+    size: 24,
   },
 ];
 

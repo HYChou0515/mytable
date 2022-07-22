@@ -223,241 +223,97 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   });
 
   return (
-    <div className="p-2">
-      <div>
-        <DebouncedInput
-          value={globalFilter ?? ""}
-          onChange={(value) => setGlobalFilter(String(value))}
-          className="p-2 font-lg shadow border border-block"
-          placeholder="Search all columns..."
-        />
-      </div>
-      <div className="h-2" />
-      <div style={{ maxWidth: "1000px" }}>
-        <table style={{ width: table.getCenterTotalSize() }}>
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    style={{ width: header.getSize() }}
+    <div>
+      <div className="overflow-x-auto">
+        <div
+          {...{
+            className: 'divTable',
+            style: {
+              width: table.getTotalSize(),
+            },
+          }}
+        >
+          <div className="thead">
+            {table.getHeaderGroups().map(headerGroup => (
+              <div
+                {...{
+                  key: headerGroup.id,
+                  className: 'tr',
+                  style: {
+                    position: 'relative',
+                  },
+                }}
+              >
+                {headerGroup.headers.map(header => (
+                  <div
+                    {...{
+                      key: header.id,
+                      className: 'th',
+                      style: {
+                        position: 'absolute',
+                        left: header.getStart(),
+                        width: header.getSize(),
+                      },
+                    }}
                   >
-                    {header.isPlaceholder ? null : (
-                      <>
-                        <section
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <div
-                            {...{
-                              className: header.column.getCanSort()
-                                ? "cursor-pointer select-none"
-                                : "",
-                              onClick: header.column.getToggleSortingHandler(),
-                            }}
-                            style={{
-                              flex: 1,
-                              textAlign: "left",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                            {{
-                              asc: <FaArrowUp />,
-                              desc: <FaArrowDown />,
-                            }[header.column.getIsSorted() as string] ?? null}
-                          </div>
-                          {header.column.getCanGroup() ? (
-                            // If the header can be grouped, let's add a toggle
-                            <button
-                              {...{
-                                onClick:
-                                  header.column.getToggleGroupingHandler(),
-                                style: {
-                                  cursor: "pointer",
-                                },
-                              }}
-                            >
-                              {header.column.getIsGrouped() ? (
-                                <CloseIcon />
-                              ) : (
-                                <GroupIcon />
-                              )}
-                            </button>
-                          ) : null}{" "}
-                        </section>
-                        {header.column.getCanFilter() ? (
-                          <div>
-                            <Filter column={header.column} table={table} />
-                          </div>
-                        ) : null}
-                      </>
-                    )}
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                     <div
                       {...{
                         onMouseDown: header.getResizeHandler(),
                         onTouchStart: header.getResizeHandler(),
                         className: `resizer ${
-                          header.column.getIsResizing() ? "isResizing" : ""
+                          header.column.getIsResizing() ? 'isResizing' : ''
                         }`,
+                        style: {
+                          transform: '',
+                        },
                       }}
                     />
-                  </th>
+                  </div>
                 ))}
-              </tr>
+              </div>
             ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => {
-              return (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map((cell) => {
-                    return (
-                      <td
-                        {...{
-                          key: cell.id,
-                          className: cell.getIsGrouped()
-                            ? "row-group"
-                            : cell.getIsAggregated()
-                            ? "row-agg"
-                            : cell.getIsPlaceholder()
-                            ? "row-placeholder"
-                            : "row-default",
-                          style: {
-                            width: cell.column.getSize(),
-                          },
-                        }}
-                      >
-                        {cell.getIsGrouped() ? (
-                          <>
-                            <section style={{ display: "flex" }}>
-                              <button
-                                {...{
-                                  onClick: row.getToggleExpandedHandler(),
-                                  style: {
-                                    cursor: row.getCanExpand()
-                                      ? "pointer"
-                                      : "normal",
-                                  },
-                                }}
-                              >
-                                {row.getIsExpanded() ? (
-                                  <FaAngleDown />
-                                ) : (
-                                  <FaAngleRight />
-                                )}
-                              </button>
-                              <div>
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext()
-                                )}{" "}
-                                ({row.subRows.length})
-                              </div>
-                            </section>
-                          </>
-                        ) : cell.getIsAggregated() ? (
-                          // If the cell is aggregated, use the Aggregated
-                          // renderer for cell
-                          flexRender(
-                            cell.column.columnDef.aggregatedCell ??
-                              cell.column.columnDef.cell,
-                            cell.getContext()
-                          )
-                        ) : cell.getIsPlaceholder() ? null : ( // For cells with repeated values, render null
-                          // Otherwise, just render the regular cell
-                          flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      <div className="h-2" />
-      {pageOptions === "one-page" ? null : (
-        <div className="flex items-center gap-2">
-          <button
-            className="border rounded p-1"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-          >
-            {"<<"}
-          </button>
-          <button
-            className="border rounded p-1"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            {"<"}
-          </button>
-          <button
-            className="border rounded p-1"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            {">"}
-          </button>
-          <button
-            className="border rounded p-1"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            {">>"}
-          </button>
-          <span className="flex items-center gap-1">
-            <div>Page</div>
-            <strong>
-              {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </strong>
-          </span>
-          <span className="flex items-center gap-1">
-            | Go to page:
-            <input
-              type="number"
-              defaultValue={table.getState().pagination.pageIndex + 1}
-              onChange={(e) => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                table.setPageIndex(page);
-              }}
-              className="border p-1 rounded w-16"
-            />
-          </span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => {
-              table.setPageSize(Number(e.target.value));
+          </div>
+          <div
+            {...{
+              className: 'tbody',
             }}
           >
-            {pageOptions.map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
+            {table.getRowModel().rows.map(row => (
+              <div
+                {...{
+                  key: row.id,
+                  className: 'tr',
+                  style: {
+                    position: 'relative',
+                  },
+                }}
+              >
+                {row.getVisibleCells().map(cell => (
+                  <div
+                    {...{
+                      key: cell.id,
+                      className: 'td',
+                      style: {
+                        position: 'absolute',
+                        left: cell.column.getStart(),
+                        width: cell.column.getSize(),
+                      },
+                    }}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </div>
+                ))}
+              </div>
             ))}
-          </select>
+          </div>
         </div>
-      )}
-      <div>{table.getPrePaginationRowModel().rows.length} Rows</div>
-      {/*<div>*/}
-      {/*  <button onClick={() => rerender()}>Force Rerender</button>*/}
-      {/*</div>*/}
-      {/*<div>*/}
-      {/*  <button onClick={() => refreshData()}>Refresh Data</button>*/}
-      {/*</div>*/}
+      </div>
       <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
     </div>
   );
