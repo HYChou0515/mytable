@@ -279,11 +279,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
               </div>
             ))}
           </div>
-          <div
-            {...{
-              className: 'tbody',
-            }}
-          >
+          <div className='tbody'>
             {table.getRowModel().rows.map(row => (
               <div
                 {...{

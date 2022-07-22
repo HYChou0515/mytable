@@ -54,6 +54,12 @@ button.myui-clicked {
   border: 1px solid lightgray;
 }
 
+.tbody {
+  display: block;
+  overflow: scroll;
+  max-height: 500px;
+}
+
 .tr {
   display: flex;
 }
