@@ -148,7 +148,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
         footer: (info) => info.column.id,
         size: 500,
       },
-    ]
+    ],
   },
   {
     accessorKey: "score",

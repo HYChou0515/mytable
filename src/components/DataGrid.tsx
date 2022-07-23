@@ -20,7 +20,10 @@ import {
   FilterFn,
   SortingFn,
   ColumnDef,
-  flexRender, Header, HeaderGroup, Cell,
+  flexRender,
+  Header,
+  HeaderGroup,
+  Cell,
 } from "@tanstack/react-table";
 import {
   FaArrowUp,
@@ -175,7 +178,7 @@ function DebouncedInput({
   );
 }
 
-const ColumnResizer: React.FC<{header: Header<any, unknown>}> = (props) => {
+const ColumnResizer: React.FC<{ header: Header<any, unknown> }> = (props) => {
   const header = props.header;
   return (
     <div
@@ -183,23 +186,23 @@ const ColumnResizer: React.FC<{header: Header<any, unknown>}> = (props) => {
         onMouseDown: header.getResizeHandler(),
         onTouchStart: header.getResizeHandler(),
         className: `resizer ${
-          header.column.getIsResizing() ? 'isResizing' : ''
+          header.column.getIsResizing() ? "isResizing" : ""
         }`,
       }}
     />
-  )
-}
+  );
+};
 
 type DivTableProps<ObjT> = {
   table: Table<ObjT>;
-}
+};
 function DivTable<ObjT>(props: React.PropsWithChildren<DivTableProps<ObjT>>) {
   const table = props.table;
   const children = props.children;
   return (
     <div
       {...{
-        className: 'table',
+        className: "table",
         style: {
           width: table.getTotalSize(),
         },
@@ -207,52 +210,52 @@ function DivTable<ObjT>(props: React.PropsWithChildren<DivTableProps<ObjT>>) {
     >
       {children}
     </div>
-  )
+  );
 }
 function DivTableHead<ObjT>(props: React.PropsWithChildren) {
   const children = props.children;
-  return (
-    <div className={"thead"}>
-      {children}
-    </div>
-  )
+  return <div className={"thead"}>{children}</div>;
 }
 
 type DivTableRowProps<ObjT> = {
-  key: any
-}
+  key: any;
+};
 
-function DivTableRow<ObjT>(props: React.PropsWithChildren<DivTableRowProps<ObjT>>) {
+function DivTableRow<ObjT>(
+  props: React.PropsWithChildren<DivTableRowProps<ObjT>>
+) {
   const children = props.children;
   const key = props.key;
   return (
     <div
-    {...{
-      key: key,
-      className: 'tr',
-      style: {
-        position: 'relative',
-      },
-    }}
-  >
-    {children}
-  </div>
-  )
+      {...{
+        key: key,
+        className: "tr",
+        style: {
+          position: "relative",
+        },
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 type DivTableHeaderCellProps<ObjT> = {
-  header: Header<ObjT, unknown>
-}
+  header: Header<ObjT, unknown>;
+};
 
-function DivTableHeadCell<ObjT>(props: React.PropsWithChildren<DivTableHeaderCellProps<ObjT>>) {
+function DivTableHeadCell<ObjT>(
+  props: React.PropsWithChildren<DivTableHeaderCellProps<ObjT>>
+) {
   const header = props.header;
   return (
     <div
       {...{
         key: header.id,
-        className: 'th',
+        className: "th",
         style: {
-          position: 'absolute',
+          position: "absolute",
           left: header.getStart(),
           width: header.getSize(),
         },
@@ -260,34 +263,29 @@ function DivTableHeadCell<ObjT>(props: React.PropsWithChildren<DivTableHeaderCel
     >
       {header.isPlaceholder
         ? null
-        : flexRender(
-          header.column.columnDef.header,
-          header.getContext()
-        )}
-      <ColumnResizer header={header}/>
+        : flexRender(header.column.columnDef.header, header.getContext())}
+      <ColumnResizer header={header} />
     </div>
-  )
+  );
 }
 function DivTableBody<ObjT>(props: React.PropsWithChildren) {
   const children = props.children;
-  return (
-    <div className={"tbody"}>
-      {children}
-    </div>
-  )
+  return <div className={"tbody"}>{children}</div>;
 }
 type DivTableBodyCellProps<ObjT> = {
-  cell: Cell<ObjT, unknown>
-}
-function DivTableBodyCell<ObjT>(props: React.PropsWithChildren<DivTableBodyCellProps<ObjT>>) {
+  cell: Cell<ObjT, unknown>;
+};
+function DivTableBodyCell<ObjT>(
+  props: React.PropsWithChildren<DivTableBodyCellProps<ObjT>>
+) {
   const cell = props.cell;
   return (
     <div
       {...{
         key: cell.id,
-        className: 'td',
+        className: "td",
         style: {
-          position: 'absolute',
+          position: "absolute",
           left: cell.column.getStart(),
           width: cell.column.getSize(),
         },
@@ -295,9 +293,8 @@ function DivTableBodyCell<ObjT>(props: React.PropsWithChildren<DivTableBodyCellP
     >
       {flexRender(cell.column.columnDef.cell, cell.getContext())}
     </div>
-  )
+  );
 }
-
 
 type DataGridProps<ObjT> = {
   data: ObjT[];
@@ -351,19 +348,19 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
       <div className="overflow-x-auto">
         <DivTable<ObjT> table={table}>
           <DivTableHead>
-            {table.getHeaderGroups().map(headerGroup => (
+            {table.getHeaderGroups().map((headerGroup) => (
               <DivTableRow<ObjT> key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <DivTableHeadCell header={header}/>
+                {headerGroup.headers.map((header) => (
+                  <DivTableHeadCell header={header} />
                 ))}
               </DivTableRow>
             ))}
           </DivTableHead>
           <DivTableBody>
-            {table.getRowModel().rows.map(row => (
+            {table.getRowModel().rows.map((row) => (
               <DivTableRow<ObjT> key={row.id}>
-                {row.getVisibleCells().map(cell => (
-                  <DivTableBodyCell cell={cell}/>
+                {row.getVisibleCells().map((cell) => (
+                  <DivTableBodyCell cell={cell} />
                 ))}
               </DivTableRow>
             ))}
