@@ -126,24 +126,29 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
     minSize: 30,
   },
   {
-    accessorKey: "type",
-    header: () => "type",
-    footer: (info) => info.column.id,
-    size: 90,
-    minSize: 30,
-  },
-  {
-    accessorKey: "ope_no",
-    header: () => "OPE_NO",
-    footer: (info) => info.column.id,
-    size: 90,
-    minSize: 30,
-  },
-  {
-    accessorKey: "factor",
     header: "Factor",
-    footer: (info) => info.column.id,
-    size: 500,
+    columns: [
+      {
+        accessorKey: "type",
+        header: () => "type",
+        footer: (info) => info.column.id,
+        size: 90,
+        minSize: 30,
+      },
+      {
+        accessorKey: "ope_no",
+        header: () => "OPE_NO",
+        footer: (info) => info.column.id,
+        size: 90,
+        minSize: 30,
+      },
+      {
+        accessorKey: "factor",
+        header: "Factor",
+        footer: (info) => info.column.id,
+        size: 500,
+      },
+    ]
   },
   {
     accessorKey: "score",
