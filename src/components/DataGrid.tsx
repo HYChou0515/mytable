@@ -20,7 +20,7 @@ import {
   FilterFn,
   SortingFn,
   ColumnDef,
-  flexRender,
+  flexRender, Header, HeaderGroup,
 } from "@tanstack/react-table";
 import {
   FaArrowUp,
@@ -175,6 +175,100 @@ function DebouncedInput({
   );
 }
 
+const ColumnResizer: React.FC<{header: Header<any, unknown>}> = (props) => {
+  const header = props.header;
+  return (
+    <div
+      {...{
+        onMouseDown: header.getResizeHandler(),
+        onTouchStart: header.getResizeHandler(),
+        className: `resizer ${
+          header.column.getIsResizing() ? 'isResizing' : ''
+        }`,
+      }}
+    />
+  )
+}
+
+type DivTableProps<ObjT> = {
+  table: Table<ObjT>;
+}
+function DivTable<ObjT>(props: React.PropsWithChildren<DivTableProps<ObjT>>) {
+  const table = props.table;
+  const children = props.children;
+  return (
+    <div
+      {...{
+        className: 'table',
+        style: {
+          width: table.getTotalSize(),
+        },
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+function DivTableHead<ObjT>(props: React.PropsWithChildren) {
+  const children = props.children;
+  return (
+    <div className={"thead"}>
+      {children}
+    </div>
+  )
+}
+
+type DivTableRowProps<ObjT> = {
+  headerGroup:  HeaderGroup<ObjT>
+}
+
+function DivTableRow<ObjT>(props: React.PropsWithChildren<DivTableRowProps<ObjT>>) {
+  const children = props.children;
+  const headerGroup = props.headerGroup;
+  return (
+    <div
+    {...{
+      key: headerGroup.id,
+      className: 'tr',
+      style: {
+        position: 'relative',
+      },
+    }}
+  >
+    {children}
+  </div>
+  )
+}
+
+type DivTableHeaderCellProps<ObjT> = {
+  header: Header<ObjT, unknown>
+}
+
+function DivTableHeaderCell<ObjT>(props: React.PropsWithChildren<DivTableHeaderCellProps<ObjT>>) {
+  const header = props.header;
+  return (
+    <div
+      {...{
+        key: header.id,
+        className: 'th',
+        style: {
+          position: 'absolute',
+          left: header.getStart(),
+          width: header.getSize(),
+        },
+      }}
+    >
+      {header.isPlaceholder
+        ? null
+        : flexRender(
+          header.column.columnDef.header,
+          header.getContext()
+        )}
+      <ColumnResizer header={header}/>
+    </div>
+  )
+}
+
 type DataGridProps<ObjT> = {
   data: ObjT[];
   columns: ColumnDef<ObjT>[];
@@ -193,7 +287,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     pageIndex: 0,
     pageSize: pageOptions === "one-page" ? data.length : pageOptions[0],
   });
-  const table = useReactTable({
+  const table = useReactTable<ObjT>({
     data,
     columns,
     columnResizeMode: "onChange",
@@ -225,60 +319,16 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   return (
     <div>
       <div className="overflow-x-auto">
-        <div
-          {...{
-            className: 'divTable',
-            style: {
-              width: table.getTotalSize(),
-            },
-          }}
-        >
-          <div className="thead">
+        <DivTable<ObjT> table={table}>
+          <DivTableHead>
             {table.getHeaderGroups().map(headerGroup => (
-              <div
-                {...{
-                  key: headerGroup.id,
-                  className: 'tr',
-                  style: {
-                    position: 'relative',
-                  },
-                }}
-              >
+              <DivTableRow<ObjT> headerGroup={headerGroup}>
                 {headerGroup.headers.map(header => (
-                  <div
-                    {...{
-                      key: header.id,
-                      className: 'th',
-                      style: {
-                        position: 'absolute',
-                        left: header.getStart(),
-                        width: header.getSize(),
-                      },
-                    }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                    <div
-                      {...{
-                        onMouseDown: header.getResizeHandler(),
-                        onTouchStart: header.getResizeHandler(),
-                        className: `resizer ${
-                          header.column.getIsResizing() ? 'isResizing' : ''
-                        }`,
-                        style: {
-                          transform: '',
-                        },
-                      }}
-                    />
-                  </div>
+                  <DivTableHeaderCell header={header}/>
                 ))}
-              </div>
+              </DivTableRow>
             ))}
-          </div>
+          </DivTableHead>
           <div className='tbody'>
             {table.getRowModel().rows.map(row => (
               <div
@@ -308,7 +358,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
               </div>
             ))}
           </div>
-        </div>
+        </DivTable>
       </div>
       <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
     </div>
