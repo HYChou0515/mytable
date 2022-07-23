@@ -20,7 +20,7 @@ import {
   FilterFn,
   SortingFn,
   ColumnDef,
-  flexRender, Header, HeaderGroup,
+  flexRender, Header, HeaderGroup, Cell,
 } from "@tanstack/react-table";
 import {
   FaArrowUp,
@@ -219,16 +219,16 @@ function DivTableHead<ObjT>(props: React.PropsWithChildren) {
 }
 
 type DivTableRowProps<ObjT> = {
-  headerGroup:  HeaderGroup<ObjT>
+  key: any
 }
 
 function DivTableRow<ObjT>(props: React.PropsWithChildren<DivTableRowProps<ObjT>>) {
   const children = props.children;
-  const headerGroup = props.headerGroup;
+  const key = props.key;
   return (
     <div
     {...{
-      key: headerGroup.id,
+      key: key,
       className: 'tr',
       style: {
         position: 'relative',
@@ -244,7 +244,7 @@ type DivTableHeaderCellProps<ObjT> = {
   header: Header<ObjT, unknown>
 }
 
-function DivTableHeaderCell<ObjT>(props: React.PropsWithChildren<DivTableHeaderCellProps<ObjT>>) {
+function DivTableHeadCell<ObjT>(props: React.PropsWithChildren<DivTableHeaderCellProps<ObjT>>) {
   const header = props.header;
   return (
     <div
@@ -268,6 +268,36 @@ function DivTableHeaderCell<ObjT>(props: React.PropsWithChildren<DivTableHeaderC
     </div>
   )
 }
+function DivTableBody<ObjT>(props: React.PropsWithChildren) {
+  const children = props.children;
+  return (
+    <div className={"tbody"}>
+      {children}
+    </div>
+  )
+}
+type DivTableBodyCellProps<ObjT> = {
+  cell: Cell<ObjT, unknown>
+}
+function DivTableBodyCell<ObjT>(props: React.PropsWithChildren<DivTableBodyCellProps<ObjT>>) {
+  const cell = props.cell;
+  return (
+    <div
+      {...{
+        key: cell.id,
+        className: 'td',
+        style: {
+          position: 'absolute',
+          left: cell.column.getStart(),
+          width: cell.column.getSize(),
+        },
+      }}
+    >
+      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    </div>
+  )
+}
+
 
 type DataGridProps<ObjT> = {
   data: ObjT[];
@@ -322,42 +352,22 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
         <DivTable<ObjT> table={table}>
           <DivTableHead>
             {table.getHeaderGroups().map(headerGroup => (
-              <DivTableRow<ObjT> headerGroup={headerGroup}>
+              <DivTableRow<ObjT> key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
-                  <DivTableHeaderCell header={header}/>
+                  <DivTableHeadCell header={header}/>
                 ))}
               </DivTableRow>
             ))}
           </DivTableHead>
-          <div className='tbody'>
+          <DivTableBody>
             {table.getRowModel().rows.map(row => (
-              <div
-                {...{
-                  key: row.id,
-                  className: 'tr',
-                  style: {
-                    position: 'relative',
-                  },
-                }}
-              >
+              <DivTableRow<ObjT> key={row.id}>
                 {row.getVisibleCells().map(cell => (
-                  <div
-                    {...{
-                      key: cell.id,
-                      className: 'td',
-                      style: {
-                        position: 'absolute',
-                        left: cell.column.getStart(),
-                        width: cell.column.getSize(),
-                      },
-                    }}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </div>
+                  <DivTableBodyCell cell={cell}/>
                 ))}
-              </div>
+              </DivTableRow>
             ))}
-          </div>
+          </DivTableBody>
         </DivTable>
       </div>
       <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
