@@ -86,6 +86,7 @@ button.myui-clicked {
 
 .td {
   height: 30px;
+  white-space: nowrap;
 }
 
 .resizer {
