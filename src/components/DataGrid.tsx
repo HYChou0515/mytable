@@ -352,25 +352,37 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   });
 
   const onAutoSizeColumn = (header: Header<ObjT, unknown>) => {
-    const targetAccessorKey = (header.column.columnDef as any).accessorKey;
-    if (targetAccessorKey == null) {
-      return;
-    }
-    const textMinWidth: number = data
-      .map((x: any) => {
-        const v = x[targetAccessorKey];
-        if (v != null) {
-          return getTextWidth(String(v), getCanvasFont());
-        } else {
-          return 0;
-        }
-      })
-      .reduce((pre, cur) => Math.max(pre, cur), 0);
-    if (textMinWidth === 0) {
-      return;
-    }
     const columnSizing = table.getState().columnSizing;
-    columnSizing[targetAccessorKey] = textMinWidth + 7;
+    const resizeColumnOfKey = (columnKey: string) => {
+      const textMinWidth: number = data
+        .map((x: any) => {
+          const v = x[columnKey];
+          if (v != null) {
+            return getTextWidth(String(v), getCanvasFont());
+          } else {
+            return 0;
+          }
+        })
+        .reduce((pre, cur) => Math.max(pre, cur), 0);
+      if (textMinWidth === 0) {
+        return;
+      }
+      columnSizing[columnKey] = textMinWidth + 7;
+    };
+    const allChildColumns: string[] = [];
+    const recursiveFindColumns = (column: Column<ObjT, unknown>) => {
+      if (column.columnDef != null) {
+        const k = (column.columnDef as any).accessorKey;
+        if (typeof k === "string") {
+          allChildColumns.push(k);
+        }
+      }
+      if (column.columns != null) {
+        column.columns.forEach(recursiveFindColumns);
+      }
+    };
+    recursiveFindColumns(header.column);
+    allChildColumns.forEach(resizeColumnOfKey);
     table.setColumnSizing(columnSizing);
   };
 
