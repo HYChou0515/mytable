@@ -77,7 +77,7 @@ button.myui-clicked {
 }
 
 .th {
-  overflow: visible;  /*intent to make only resizer work*/
+  overflow: visible; /*intent to make only resizer work*/
   padding: 2px 4px;
   position: relative;
   font-weight: bold;

@@ -1,4 +1,4 @@
-import React, {createContext, useContext} from "react";
+import React, { createContext, useContext } from "react";
 
 import {
   Column,
@@ -38,7 +38,7 @@ import {
   rankItem,
   compareItems,
 } from "@tanstack/match-sorter-utils";
-import {getTextWidth, getCanvasFont} from "../utils/textWidth";
+import { getTextWidth, getCanvasFont } from "../utils/textWidth";
 
 // Objectives
 // [V] 1. show data in data grid
@@ -56,7 +56,7 @@ const CloseIcon: React.FC = () => <GrClose />;
 
 type TableContextProps = {
   onAutoSizeColumn: (header: Header<any, unknown>) => void;
-}
+};
 const TableContext = createContext<TableContextProps>({
   onAutoSizeColumn: () => false,
 });
@@ -185,18 +185,20 @@ function DebouncedInput({
   );
 }
 
-function ColumnResizer<ObjT> (props: React.PropsWithChildren<{header: Header<ObjT, unknown>}>) {
-    const {onAutoSizeColumn} = useContext(TableContext);
-    const header = props.header;
+function ColumnResizer<ObjT>(
+  props: React.PropsWithChildren<{ header: Header<ObjT, unknown> }>
+) {
+  const { onAutoSizeColumn } = useContext(TableContext);
+  const header = props.header;
   return (
-      <div
-        onDoubleClick={() => onAutoSizeColumn(header)}
-        onMouseDown={header.getResizeHandler()}
-        {...{
-          className: "resizer",
-        }}
-      />
-    );
+    <div
+      onDoubleClick={() => onAutoSizeColumn(header)}
+      onMouseDown={header.getResizeHandler()}
+      {...{
+        className: "resizer",
+      }}
+    />
+  );
 }
 
 type DivTableProps<ObjT> = {
@@ -352,51 +354,53 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   const onAutoSizeColumn = (header: Header<ObjT, unknown>) => {
     const targetAccessorKey = (header.column.columnDef as any).accessorKey;
     if (targetAccessorKey == null) {
-      return
+      return;
     }
-    const textMinWidth: number = data.map((x: any) => {
+    const textMinWidth: number = data
+      .map((x: any) => {
         const v = x[targetAccessorKey];
-        if(v != null) {
+        if (v != null) {
           return getTextWidth(String(v), getCanvasFont());
         } else {
           return 0;
         }
-      }).reduce((pre, cur) => Math.max(pre, cur), 0);
-    if(textMinWidth === 0) {
-      return
+      })
+      .reduce((pre, cur) => Math.max(pre, cur), 0);
+    if (textMinWidth === 0) {
+      return;
     }
     const columnSizing = table.getState().columnSizing;
-    columnSizing[targetAccessorKey] = textMinWidth + 7
-    table.setColumnSizing(columnSizing)
-  }
+    columnSizing[targetAccessorKey] = textMinWidth + 7;
+    table.setColumnSizing(columnSizing);
+  };
 
   return (
-    <TableContext.Provider value={{onAutoSizeColumn}}>
-    <div>
-      <div className="overflow-x-auto">
-        <DivTable<ObjT> table={table}>
-          <DivTableHead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <DivTableRow<ObjT> key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <DivTableHeadCell header={header} />
-                ))}
-              </DivTableRow>
-            ))}
-          </DivTableHead>
-          <DivTableBody>
-            {table.getRowModel().rows.map((row) => (
-              <DivTableRow<ObjT> key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <DivTableBodyCell cell={cell} />
-                ))}
-              </DivTableRow>
-            ))}
-          </DivTableBody>
-        </DivTable>
+    <TableContext.Provider value={{ onAutoSizeColumn }}>
+      <div>
+        <div className="overflow-x-auto">
+          <DivTable<ObjT> table={table}>
+            <DivTableHead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <DivTableRow<ObjT> key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <DivTableHeadCell header={header} />
+                  ))}
+                </DivTableRow>
+              ))}
+            </DivTableHead>
+            <DivTableBody>
+              {table.getRowModel().rows.map((row) => (
+                <DivTableRow<ObjT> key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <DivTableBodyCell cell={cell} />
+                  ))}
+                </DivTableRow>
+              ))}
+            </DivTableBody>
+          </DivTable>
+        </div>
+        <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
       </div>
-      <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
-    </div>
     </TableContext.Provider>
   );
 }

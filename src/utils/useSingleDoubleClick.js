@@ -24,7 +24,7 @@ const requestTimeout = (fn, delay, registerCancel) => {
 
 const useCancelableScheduledWork = () => {
   const cancelCallback = useRef(noop);
-  const registerCancel = fn => (cancelCallback.current = fn);
+  const registerCancel = (fn) => (cancelCallback.current = fn);
   const cancelScheduledWork = () => cancelCallback.current();
 
   // Cancels the current scheduled work before the "unmount"
