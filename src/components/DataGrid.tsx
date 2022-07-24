@@ -1,4 +1,4 @@
-import React from "react";
+import React, {createContext, useContext} from "react";
 
 import {
   Column,
@@ -33,12 +33,12 @@ import {
 } from "react-icons/fa";
 import { VscListTree } from "react-icons/vsc";
 import { GrClose } from "react-icons/gr";
-
 import {
   RankingInfo,
   rankItem,
   compareItems,
 } from "@tanstack/match-sorter-utils";
+import {getTextWidth, getCanvasFont} from "../utils/textWidth";
 
 // Objectives
 // [V] 1. show data in data grid
@@ -53,6 +53,13 @@ import {
 
 const GroupIcon: React.FC = () => <VscListTree />;
 const CloseIcon: React.FC = () => <GrClose />;
+
+type TableContextProps = {
+  onAutoSizeColumn: (header: Header<any, unknown>) => void;
+}
+const TableContext = createContext<TableContextProps>({
+  onAutoSizeColumn: () => false,
+});
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -178,20 +185,21 @@ function DebouncedInput({
   );
 }
 
-const ColumnResizer: React.FC<{ header: Header<any, unknown> }> = (props) => {
-  const header = props.header;
+function ColumnResizer<ObjT> (props: React.PropsWithChildren<{header: Header<ObjT, unknown>}>) {
+    const {onAutoSizeColumn} = useContext(TableContext);
+    const header = props.header;
   return (
-    <div
-      {...{
-        onMouseDown: header.getResizeHandler(),
-        onTouchStart: header.getResizeHandler(),
-        className: `resizer ${
-          header.column.getIsResizing() ? "isResizing" : ""
-        }`,
-      }}
-    />
-  );
-};
+      <div
+        onDoubleClick={() => onAutoSizeColumn(header)}
+        onMouseDown={header.getResizeHandler()}
+        {...{
+          className: `resizer ${
+            header.column.getIsResizing() ? "isResizing" : ""
+          }`,
+        }}
+      />
+    );
+}
 
 type DivTableProps<ObjT> = {
   table: Table<ObjT>;
@@ -264,7 +272,7 @@ function DivTableHeadCell<ObjT>(
       {header.isPlaceholder
         ? null
         : flexRender(header.column.columnDef.header, header.getContext())}
-      <ColumnResizer header={header} />
+      <ColumnResizer<ObjT> header={header} />
     </div>
   );
 }
@@ -343,7 +351,29 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     debugColumns: true,
   });
 
+  const onAutoSizeColumn = (header: Header<ObjT, unknown>) => {
+    const targetAccessorKey = (header.column.columnDef as any).accessorKey;
+    if (targetAccessorKey == null) {
+      return
+    }
+    const textMinWidth: number = data.map((x: any) => {
+        const v = x[targetAccessorKey];
+        if(v != null) {
+          return getTextWidth(String(v), getCanvasFont());
+        } else {
+          return 0;
+        }
+      }).reduce((pre, cur) => Math.max(pre, cur), 0);
+    if(textMinWidth === 0) {
+      return
+    }
+    const columnSizing = table.getState().columnSizing;
+    columnSizing[targetAccessorKey] = textMinWidth + 7
+    table.setColumnSizing(columnSizing)
+  }
+
   return (
+    <TableContext.Provider value={{onAutoSizeColumn}}>
     <div>
       <div className="overflow-x-auto">
         <DivTable<ObjT> table={table}>
@@ -369,6 +399,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
       </div>
       <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
     </div>
+    </TableContext.Provider>
   );
 }
 

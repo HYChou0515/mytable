@@ -118,6 +118,7 @@ const PlotPopoverHover: React.FC<PlotPopoverHoverProps> = (props) => {
 const dataColumns: ColumnDef<RootCauseItemBody>[] = [
   {
     accessorKey: "index",
+    header: "Index",
     cell: (info) => info.getValue(),
     footer: (info) => info.column.id,
     enableGrouping: false,
@@ -130,7 +131,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
     columns: [
       {
         accessorKey: "type",
-        header: () => "type",
+        header: () => "Type",
         footer: (info) => info.column.id,
         size: 90,
         minSize: 30,
@@ -160,7 +161,8 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
     size: 90,
   },
   {
-    header: " ",
+    id: "plot",
+    header: () => "",
     enableGrouping: false,
     cell: (props) => (
       <span>
@@ -171,7 +173,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
   },
 ];
 
-const DataContext = createContext(makeData(200));
+const DataContext = createContext(makeData(10));
 
 const DataReport: React.FC = () => {
   const data = useContext(DataContext);
