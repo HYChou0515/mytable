@@ -1,3 +1,5 @@
+/*border and background*/
+
 * {
   --header-cell-color: #f5f7f7;
   --body-cell-color-odd: #ffffff;
@@ -53,6 +55,25 @@
   background-color: var(--body-cell-color-hover);
 }
 
-/*.table-head-cell {*/
-/*    border: 2px solid #000000;*/
-/*}*/
+/*font*/
+* {
+  --header-font-color: #707172;
+}
+
+.table-head-cell {
+  color: var(--header-font-color);
+  text-align: left;
+  padding-left: 6px;
+}
+
+/*height*/
+* {
+  --header-row-height: 28px;
+}
+
+.table-row,
+.table-head-cell,
+.table-body-cell {
+  height: var(--header-row-height);
+  line-height: var(--header-row-height);
+}

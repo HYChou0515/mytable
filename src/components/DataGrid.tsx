@@ -367,7 +367,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
       if (textMinWidth === 0) {
         return;
       }
-      columnSizing[columnKey] = textMinWidth + 7;
+      columnSizing[columnKey] = textMinWidth + 8;
     };
     const allChildColumns: string[] = [];
     const recursiveFindColumns = (column: Column<ObjT, unknown>) => {
