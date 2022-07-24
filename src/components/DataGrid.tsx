@@ -238,7 +238,7 @@ function DivTableRow<ObjT>(
     <div
       {...{
         key: key,
-        className: "tr",
+        className: "table-row",
         style: {
           position: "relative",
         },
@@ -261,7 +261,7 @@ function DivTableHeadCell<ObjT>(
     <div
       {...{
         key: header.id,
-        className: "th",
+        className: "table-head-cell",
         style: {
           position: "absolute",
           left: header.getStart(),
@@ -291,7 +291,7 @@ function DivTableBodyCell<ObjT>(
     <div
       {...{
         key: cell.id,
-        className: "td",
+        className: "table-body-cell",
         style: {
           position: "absolute",
           left: cell.column.getStart(),
@@ -389,7 +389,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   return (
     <TableContext.Provider value={{ onAutoSizeColumn }}>
       <div>
-        <div className="overflow-x-auto">
+        <div>
           <DivTable<ObjT> table={table}>
             <DivTableHead>
               {table.getHeaderGroups().map((headerGroup) => (

@@ -17,9 +17,9 @@ html {
   background-color: antiquewhite;
 }
 
-.row-group .row-agg .row-placeholder .row-default {
-  background-color: white;
-}
+/*.row-group .row-agg .row-placeholder .row-default {*/
+/*  background-color: white;*/
+/*}*/
 
 button.myui {
   display: inline-block;
@@ -60,23 +60,23 @@ button.myui-clicked {
   max-height: 500px;
 }
 
-.tr {
+.table-row {
   display: flex;
 }
 
-.tr {
+.table-row {
   height: 30px;
 }
 
-.th,
-.td {
-  box-shadow: inset 0 0 0 1px lightgray;
+.table-head-cell,
+.table-body-cell {
+  /*box-shadow: inset 0 0 0 1px lightgray;*/
   padding: 0.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.th {
+.table-head-cell {
   overflow: visible; /*intent to make only resizer work*/
   padding: 2px 4px;
   position: relative;
@@ -85,7 +85,7 @@ button.myui-clicked {
   height: 30px;
 }
 
-.td {
+.table-body-cell {
   height: 30px;
   white-space: nowrap;
 }

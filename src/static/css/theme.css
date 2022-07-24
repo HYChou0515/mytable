@@ -1,0 +1,58 @@
+* {
+  --header-cell-color: #f5f7f7;
+  --body-cell-color-odd: #ffffff;
+  --body-cell-color-even: #fcfcfe;
+  --body-cell-color-hover: #edf0f0;
+  --outer-border-color: #bec3c7;
+  --inner-border-color: #d9dcdf;
+}
+
+.table-head-cell {
+  background-color: var(--header-cell-color);
+}
+.tbody {
+  border-bottom: 1px var(--outer-border-color) solid;
+}
+
+.table-head-cell {
+  border: 0 var(--outer-border-color) solid;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+.table-row .table-head-cell:last-child {
+  border-right-width: 1px;
+}
+.table-row:last-child .table-head-cell {
+  border-bottom-width: 1px;
+}
+.table-body-cell {
+  border: 0 var(--inner-border-color) solid;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+.table-row .table-body-cell:first-child {
+  border-left-color: var(--outer-border-color);
+}
+.table-row .table-body-cell:last-child {
+  border-right-width: 1px;
+  border-right-color: var(--outer-border-color);
+}
+.table-row:last-child .table-body-cell {
+  border-bottom-width: 0;
+}
+
+.table-row:nth-child(odd) .table-body-cell {
+  background-color: var(--body-cell-color-odd);
+}
+
+.table-row:nth-child(even) .table-body-cell {
+  background-color: var(--body-cell-color-even);
+}
+
+.table-row:hover .table-body-cell {
+  background-color: var(--body-cell-color-hover);
+}
+
+/*.table-head-cell {*/
+/*    border: 2px solid #000000;*/
+/*}*/

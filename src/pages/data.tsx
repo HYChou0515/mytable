@@ -176,7 +176,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
   },
 ];
 
-const DataContext = createContext(makeData(10));
+const DataContext = createContext(makeData(100));
 
 const DataReport: React.FC = () => {
   const data = useContext(DataContext);
@@ -200,11 +200,17 @@ const DataReport: React.FC = () => {
       <div>
         <p>{faker.lorem.paragraphs()}</p>
       </div>
-      <DataGrid<RootCauseItemBody>
-        data={data}
-        columns={dataColumns}
-        pageOptions={"one-page"}
-      />
+      <div style={{ display: "flex" }}>
+        <div style={{ width: 250 }}>
+          <p>{faker.lorem.paragraphs()}</p>
+        </div>
+        <div style={{ width: 10 }} />
+        <DataGrid<RootCauseItemBody>
+          data={data}
+          columns={dataColumns}
+          pageOptions={"one-page"}
+        />
+      </div>
     </PlotPopoverHoverContext.Provider>
   );
 };
