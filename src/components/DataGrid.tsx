@@ -193,9 +193,7 @@ function ColumnResizer<ObjT> (props: React.PropsWithChildren<{header: Header<Obj
         onDoubleClick={() => onAutoSizeColumn(header)}
         onMouseDown={header.getResizeHandler()}
         {...{
-          className: `resizer ${
-            header.column.getIsResizing() ? "isResizing" : ""
-          }`,
+          className: "resizer",
         }}
       />
     );
