@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 import {
   Column,
@@ -25,6 +25,8 @@ import {
   HeaderGroup,
   Cell,
 } from "@tanstack/react-table";
+import { Popover, Tab } from "@headlessui/react";
+import { usePopper } from "react-popper";
 import {
   FaArrowUp,
   FaArrowDown,
@@ -33,6 +35,7 @@ import {
 } from "react-icons/fa";
 import { VscListTree } from "react-icons/vsc";
 import { GrClose } from "react-icons/gr";
+import { HiOutlineFilter } from "react-icons/hi";
 import {
   RankingInfo,
   rankItem,
@@ -75,6 +78,64 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
 };
 
 function Filter({
+  column,
+  table,
+}: {
+  column: Column<any, unknown>;
+  table: Table<any>;
+}) {
+  const firstValue = table
+    .getPreFilteredRowModel()
+    .flatRows[0]?.getValue(column.id);
+
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [filterType, setFilterType] = useState(typeof firstValue);
+  const [textValue, setTextValue] = useState<string>("");
+
+  const columnFilterValue = column.getFilterValue();
+
+  const sortedUniqueValues = React.useMemo(
+    () =>
+      typeof firstValue === "number"
+        ? []
+        : Array.from(column.getFacetedUniqueValues().keys()).sort(),
+    [column.getFacetedUniqueValues()]
+  );
+
+  return (
+    <div>
+      {/*<input*/}
+      {/*  type="text"*/}
+      {/*  value={(columnFilterValue ?? "") as string}*/}
+      {/*  onChange={(e) => column.setFilterValue(e.target.value)}*/}
+      {/*  placeholder={`Search... (${column.getFacetedUniqueValues().size})`}*/}
+      {/*  style={{width: "100%"}}*/}
+      {/*/>*/}
+      <Popover className="relative">
+        <Popover.Button>Solutions</Popover.Button>
+
+        <Popover.Panel className="absolute z-10">
+          <Tab.Group>
+            <Tab.List>
+              <Tab>Tab 1</Tab>
+              <Tab>Tab 2</Tab>
+              <Tab>Tab 3</Tab>
+            </Tab.List>
+            <Tab.Panels>
+              <Tab.Panel>Content 1</Tab.Panel>
+              <Tab.Panel>Content 2</Tab.Panel>
+              <Tab.Panel>Content 3</Tab.Panel>
+            </Tab.Panels>
+          </Tab.Group>
+
+          <img src="/solutions.jpg" alt="" />
+        </Popover.Panel>
+      </Popover>
+    </div>
+  );
+}
+
+function Filter2({
   column,
   table,
 }: {
@@ -289,6 +350,35 @@ function DivTableHeadCell<ObjT>(
     </div>
   );
 }
+
+type DivTableHeadCellFilterProps<ObjT> = {
+  header: Header<ObjT, unknown>;
+  table: Table<ObjT>;
+};
+function DivTableHeadCellFilter<ObjT>(
+  props: React.PropsWithChildren<DivTableHeadCellFilterProps<ObjT>>
+) {
+  const header = props.header;
+  const table = props.table;
+  return (
+    <div
+      key={header.id}
+      className={"table-head-cell"}
+      style={{
+        justifyContent: "space-between",
+        left: header.getStart(),
+        width: header.getSize(),
+      }}
+    >
+      {header.column.getCanFilter() ? (
+        <div>
+          <Filter column={header.column} table={table} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function DivTableBody<ObjT>(props: React.PropsWithChildren) {
   const children = props.children;
   return <div className={"tbody"}>{children}</div>;
@@ -430,20 +520,29 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     table.setColumnSizing(columnSizing);
   };
 
+  const headerGroups = table.getHeaderGroups();
+  const leafHeaderGroup = headerGroups[headerGroups.length - 1];
+  const columnsHead = headerGroups.map((headerGroup) => (
+    <DivTableRow<ObjT> key={headerGroup.id}>
+      {headerGroup.headers.map((header) => (
+        <DivTableHeadCell header={header} />
+      ))}
+    </DivTableRow>
+  ));
+  columnsHead.push(
+    <DivTableRow<ObjT> key={`${leafHeaderGroup.id}-filter`}>
+      {leafHeaderGroup.headers.map((header) => (
+        <DivTableHeadCellFilter header={header} table={table} />
+      ))}
+    </DivTableRow>
+  );
+
   return (
     <TableContext.Provider value={{ onAutoSizeColumn }}>
       <div>
         <div>
           <DivTable<ObjT> table={table}>
-            <DivTableHead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <DivTableRow<ObjT> key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <DivTableHeadCell header={header} />
-                  ))}
-                </DivTableRow>
-              ))}
-            </DivTableHead>
+            <DivTableHead>{columnsHead}</DivTableHead>
             <DivTableBody>
               {table.getRowModel().rows.map((row) => (
                 <DivTableRow<ObjT> key={row.id}>
