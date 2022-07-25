@@ -17,10 +17,6 @@ html {
   background-color: antiquewhite;
 }
 
-/*.row-group .row-agg .row-placeholder .row-default {*/
-/*  background-color: white;*/
-/*}*/
-
 button.myui {
   display: inline-block;
   background-color: #0000;
@@ -50,6 +46,8 @@ button.myui-clicked {
   box-sizing: border-box;
 }
 
+/*==========tables==========*/
+
 .table {
   /*border: 1px solid lightgray;*/
 }
@@ -74,12 +72,15 @@ button.myui-clicked {
   padding: 0.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
+  align-items: center;
+  display: flex;
+  gap: 10px;
 }
 
 .table-head-cell {
   overflow: visible; /*intent to make only resizer work*/
   padding: 2px 4px;
-  position: relative;
+  position: absolute;
   font-weight: bold;
   text-align: center;
   height: 30px;
@@ -101,4 +102,12 @@ button.myui-clicked {
   cursor: col-resize;
   user-select: none;
   touch-action: none;
+}
+
+/*==========buttons==========*/
+/*icon button*/
+.icon-button {
+  padding: 0;
+  border: none;
+  background: none;
 }

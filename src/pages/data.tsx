@@ -128,27 +128,29 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
   },
   {
     header: "Factor",
+    enableGrouping: false,
+    minSize: 75,
     columns: [
       {
         accessorKey: "type",
         header: () => "Type",
         footer: (info) => info.column.id,
         size: 90,
-        minSize: 40,
+        minSize: 75,
       },
       {
         accessorKey: "ope_no",
         header: () => "OPE_NO",
         footer: (info) => info.column.id,
         size: 90,
-        minSize: 68,
+        minSize: 100,
       },
       {
         accessorKey: "factor",
         header: "Factor",
         footer: (info) => info.column.id,
         size: 500,
-        minSize: 50,
+        minSize: 85,
       },
     ],
   },

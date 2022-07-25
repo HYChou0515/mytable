@@ -259,19 +259,32 @@ function DivTableHeadCell<ObjT>(
   const header = props.header;
   return (
     <div
-      {...{
-        key: header.id,
-        className: "table-head-cell",
-        style: {
-          position: "absolute",
-          left: header.getStart(),
-          width: header.getSize(),
-        },
+      key={header.id}
+      className={"table-head-cell"}
+      style={{
+        justifyContent: "space-between",
+        left: header.getStart(),
+        width: header.getSize(),
       }}
     >
       {header.isPlaceholder
         ? null
         : flexRender(header.column.columnDef.header, header.getContext())}
+      {header.column.getCanGroup() ? (
+        <button
+          onClick={header.column.getToggleGroupingHandler()}
+          style={{
+            cursor: "pointer",
+          }}
+          className={"icon-button"}
+        >
+          {header.column.getIsGrouped() ? (
+            <img src="cross-group.svg" />
+          ) : (
+            <img src="group.svg" />
+          )}
+        </button>
+      ) : null}
       <ColumnResizer<ObjT> header={header} />
     </div>
   );
@@ -287,6 +300,37 @@ function DivTableBodyCell<ObjT>(
   props: React.PropsWithChildren<DivTableBodyCellProps<ObjT>>
 ) {
   const cell = props.cell;
+  let cellContent = null;
+  if (cell.getIsGrouped()) {
+    cellContent = (
+      <>
+        <button
+          onClick={cell.row.getToggleExpandedHandler()}
+          className={"icon-button"}
+          style={{
+            cursor: cell.row.getCanExpand() ? "pointer" : "normal",
+          }}
+        >
+          {cell.row.getIsExpanded() ? (
+            <FaAngleDown className={"body-icon-button"} />
+          ) : (
+            <FaAngleRight className={"body-icon-button"} />
+          )}
+        </button>
+        {flexRender(cell.column.columnDef.cell, cell.getContext())}(
+        {cell.row.subRows.length})
+      </>
+    );
+  } else if (cell.getIsAggregated()) {
+    cellContent = flexRender(
+      cell.column.columnDef.aggregatedCell ?? cell.column.columnDef.cell,
+      cell.getContext()
+    );
+  } else if (cell.getIsPlaceholder()) {
+    cellContent = null;
+  } else {
+    cellContent = flexRender(cell.column.columnDef.cell, cell.getContext());
+  }
   return (
     <div
       {...{
@@ -299,7 +343,7 @@ function DivTableBodyCell<ObjT>(
         },
       }}
     >
-      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+      {cellContent}
     </div>
   );
 }
