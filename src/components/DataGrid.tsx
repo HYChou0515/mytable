@@ -101,7 +101,17 @@ function Filter({
         : Array.from(column.getFacetedUniqueValues().keys()).sort(),
     [column.getFacetedUniqueValues()]
   );
+  const [referenceElement, setReferenceElement] = useState<Element|null>(null)
+  const [popperElement, setPopperElement] = useState<HTMLElement|null>(null)
+  const [arrowElement, setArrowElement] = useState<HTMLElement|null>(null)
+  const { styles, attributes } = usePopper(referenceElement, popperElement, {
+    placement: 'bottom-start',
+    modifiers: [
+      { name: 'offset', options: { offset: [0, 10] }},
+      { name: 'arrow', options: { element: arrowElement } },
+   ]})
 
+  console.log(styles)
   return (
     <div>
       {/*<input*/}
@@ -111,10 +121,16 @@ function Filter({
       {/*  placeholder={`Search... (${column.getFacetedUniqueValues().size})`}*/}
       {/*  style={{width: "100%"}}*/}
       {/*/>*/}
-      <Popover className="relative">
-        <Popover.Button>Solutions</Popover.Button>
+      <Popover>
+        <Popover.Button ref={setReferenceElement}>Solutions</Popover.Button>
 
-        <Popover.Panel className="absolute z-10">
+        <Popover.Panel
+          {...attributes.popper}
+          ref={setPopperElement}
+          style={{...styles.popper, width: 200}}
+          className={"popover-panel"}
+        >
+          <div className={"popover-arrow"} ref={setArrowElement} style={styles.arrow} />
           <Tab.Group>
             <Tab.List>
               <Tab>Tab 1</Tab>
@@ -127,8 +143,6 @@ function Filter({
               <Tab.Panel>Content 3</Tab.Panel>
             </Tab.Panels>
           </Tab.Group>
-
-          <img src="/solutions.jpg" alt="" />
         </Popover.Panel>
       </Popover>
     </div>
@@ -537,6 +551,9 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     </DivTableRow>
   );
 
+  const [referenceElement, setReferenceElement] = useState<Element|null>(null)
+  const [popperElement, setPopperElement] = useState<HTMLElement|null>(null)
+  const { styles, attributes } = usePopper(referenceElement, popperElement)
   return (
     <TableContext.Provider value={{ onAutoSizeColumn }}>
       <div>
@@ -555,6 +572,31 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
           </DivTable>
         </div>
         <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
+
+        <Popover className="relative">
+          <Popover.Button ref={setReferenceElement}>Solutions</Popover.Button>
+
+          <Popover.Panel
+            ref={setPopperElement}
+            style={styles.popper}
+            {...attributes.popper}
+          >
+            <Tab.Group>
+              <Tab.List>
+                <Tab>Tab 1</Tab>
+                <Tab>Tab 2</Tab>
+                <Tab>Tab 3</Tab>
+              </Tab.List>
+              <Tab.Panels>
+                <Tab.Panel>Content 1</Tab.Panel>
+                <Tab.Panel>Content 2</Tab.Panel>
+                <Tab.Panel>Content 3</Tab.Panel>
+              </Tab.Panels>
+            </Tab.Group>
+
+            <img src="/solutions.jpg" alt="" />
+          </Popover.Panel>
+        </Popover>
       </div>
     </TableContext.Provider>
   );

@@ -84,3 +84,19 @@
   height: var(--header-row-height);
   line-height: var(--header-row-height);
 }
+
+/*==========popover==========*/
+* {
+  --popover-border-color: var(--outer-border-color);
+  --popover-background-color: var(--body-cell-color-even);
+}
+
+.popover-panel {
+  z-index: 3000;
+  border-radius: 3px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border: 1px var(--popover-border-color) solid;
+  background-color: var(--popover-background-color);
+  box-shadow: 5px 5px 5px;
+}
