@@ -25,7 +25,7 @@ import {
   HeaderGroup,
   Cell,
 } from "@tanstack/react-table";
-import { Popover, Tab } from "@headlessui/react";
+import { Popover, Tab, Listbox } from "@headlessui/react";
 import { usePopper } from "react-popper";
 import {
   FaArrowUp,
@@ -122,7 +122,7 @@ function Filter({
       {/*  style={{width: "100%"}}*/}
       {/*/>*/}
       <Popover>
-        <Popover.Button ref={setReferenceElement}>Solutions</Popover.Button>
+        <Popover.Button className={"icon-button"} ref={setReferenceElement}><HiOutlineFilter className={"body-icon-button"}/></Popover.Button>
 
         <Popover.Panel
           {...attributes.popper}
@@ -133,12 +133,30 @@ function Filter({
           <div className={"popover-arrow"} ref={setArrowElement} style={styles.arrow} />
           <Tab.Group>
             <Tab.List>
-              <Tab>Tab 1</Tab>
-              <Tab>Tab 2</Tab>
-              <Tab>Tab 3</Tab>
+              <Tab>Select</Tab>
+              <Tab>Number</Tab>
+              <Tab>Text</Tab>
             </Tab.List>
             <Tab.Panels>
-              <Tab.Panel>Content 1</Tab.Panel>
+              <Tab.Panel>
+
+                <Listbox
+                  value={(columnFilterValue ?? "") as string}
+                  onChange={(s) => column.setFilterValue(s)}
+                >
+                  <Listbox.Button>{(columnFilterValue ?? "") as string}</Listbox.Button>
+                  <Listbox.Options>
+                    {sortedUniqueValues.map((v) => (
+                      <Listbox.Option
+                        key={v}
+                        value={v}
+                      >
+                        {v}
+                      </Listbox.Option>
+                    ))}
+                  </Listbox.Options>
+                </Listbox>
+              </Tab.Panel>
               <Tab.Panel>Content 2</Tab.Panel>
               <Tab.Panel>Content 3</Tab.Panel>
             </Tab.Panels>
@@ -572,31 +590,6 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
           </DivTable>
         </div>
         <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
-
-        <Popover className="relative">
-          <Popover.Button ref={setReferenceElement}>Solutions</Popover.Button>
-
-          <Popover.Panel
-            ref={setPopperElement}
-            style={styles.popper}
-            {...attributes.popper}
-          >
-            <Tab.Group>
-              <Tab.List>
-                <Tab>Tab 1</Tab>
-                <Tab>Tab 2</Tab>
-                <Tab>Tab 3</Tab>
-              </Tab.List>
-              <Tab.Panels>
-                <Tab.Panel>Content 1</Tab.Panel>
-                <Tab.Panel>Content 2</Tab.Panel>
-                <Tab.Panel>Content 3</Tab.Panel>
-              </Tab.Panels>
-            </Tab.Group>
-
-            <img src="/solutions.jpg" alt="" />
-          </Popover.Panel>
-        </Popover>
       </div>
     </TableContext.Provider>
   );
