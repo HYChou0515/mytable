@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { Fragment, createContext, useContext, useState } from "react";
 
 import {
   Column,
@@ -32,7 +32,13 @@ import {
   FaArrowDown,
   FaAngleDown,
   FaAngleRight,
+  FaCheck,
 } from "react-icons/fa";
+import {
+  BiCheckboxChecked,
+  BiCheckbox,
+  BiCheckboxSquare,
+} from "react-icons/bi";
 import { VscListTree } from "react-icons/vsc";
 import { GrClose } from "react-icons/gr";
 import { HiOutlineFilter } from "react-icons/hi";
@@ -92,45 +98,63 @@ function Filter({
   const [filterType, setFilterType] = useState(typeof firstValue);
   const [textValue, setTextValue] = useState<string>("");
 
-  const columnFilterValue = column.getFilterValue();
-
   const sortedUniqueValues = React.useMemo(
     () =>
-      typeof firstValue === "number"
-        ? []
-        : Array.from(column.getFacetedUniqueValues().keys()).sort(),
+      Array.from(column.getFacetedUniqueValues().keys())
+        .sort()
+        .filter((s) => typeof s === "number" || typeof s === "string")
+        .map(String),
     [column.getFacetedUniqueValues()]
   );
-  const [referenceElement, setReferenceElement] = useState<Element|null>(null)
-  const [popperElement, setPopperElement] = useState<HTMLElement|null>(null)
-  const [arrowElement, setArrowElement] = useState<HTMLElement|null>(null)
-  const { styles, attributes } = usePopper(referenceElement, popperElement, {
-    placement: 'bottom-start',
-    modifiers: [
-      { name: 'offset', options: { offset: [0, 10] }},
-      { name: 'arrow', options: { element: arrowElement } },
-   ]})
+  let columnFilterValue = column.getFilterValue() as MultipleFilterValue;
+  if (columnFilterValue == null) {
+    columnFilterValue = {
+      activated: "selection",
+      filterValues: {
+        numericBetween: [null, null],
+        selection: sortedUniqueValues,
+        textContains: "",
+      },
+    } as MultipleFilterValue;
+  }
 
-  console.log(styles)
+  const [referenceElement, setReferenceElement] = useState<Element | null>(
+    null
+  );
+  const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
+  const [arrowElement, setArrowElement] = useState<HTMLElement | null>(null);
+  const { styles, attributes } = usePopper(referenceElement, popperElement, {
+    placement: "bottom-start",
+    modifiers: [
+      { name: "offset", options: { offset: [0, 10] } },
+      { name: "arrow", options: { element: arrowElement } },
+    ],
+  });
+  const checkedState =
+    columnFilterValue.filterValues.selection.length === 0
+      ? "empty"
+      : columnFilterValue.filterValues.selection.length ===
+        sortedUniqueValues.length
+      ? "full"
+      : "intermediate";
+
   return (
     <div>
-      {/*<input*/}
-      {/*  type="text"*/}
-      {/*  value={(columnFilterValue ?? "") as string}*/}
-      {/*  onChange={(e) => column.setFilterValue(e.target.value)}*/}
-      {/*  placeholder={`Search... (${column.getFacetedUniqueValues().size})`}*/}
-      {/*  style={{width: "100%"}}*/}
-      {/*/>*/}
       <Popover>
-        <Popover.Button className={"icon-button"} ref={setReferenceElement}><HiOutlineFilter className={"body-icon-button"}/></Popover.Button>
-
+        <Popover.Button className={"icon-button"} ref={setReferenceElement}>
+          <HiOutlineFilter className={"body-icon-button"} />
+        </Popover.Button>
         <Popover.Panel
           {...attributes.popper}
           ref={setPopperElement}
-          style={{...styles.popper, width: 200}}
+          style={{ ...styles.popper, width: 200 }}
           className={"popover-panel"}
         >
-          <div className={"popover-arrow"} ref={setArrowElement} style={styles.arrow} />
+          <div
+            className={"popover-arrow"}
+            ref={setArrowElement}
+            style={styles.arrow}
+          />
           <Tab.Group>
             <Tab.List>
               <Tab>Select</Tab>
@@ -139,26 +163,138 @@ function Filter({
             </Tab.List>
             <Tab.Panels>
               <Tab.Panel>
-
                 <Listbox
-                  value={(columnFilterValue ?? "") as string}
-                  onChange={(s) => column.setFilterValue(s)}
+                  multiple
+                  value={columnFilterValue.filterValues.selection}
+                  onChange={(s) => {
+                    column.setFilterValue({
+                      ...columnFilterValue,
+                      activated: "selection",
+                      filterValues: {
+                        ...columnFilterValue.filterValues,
+                        selection: s,
+                      },
+                    } as MultipleFilterValue);
+                  }}
                 >
-                  <Listbox.Button>{(columnFilterValue ?? "") as string}</Listbox.Button>
-                  <Listbox.Options>
-                    {sortedUniqueValues.map((v) => (
-                      <Listbox.Option
-                        key={v}
-                        value={v}
-                      >
-                        {v}
+                  <Listbox.Button as={Fragment}>
+                    <div className="selection-list-button">
+                      {columnFilterValue.filterValues.selection.length === 0
+                        ? "(empty)"
+                        : columnFilterValue.filterValues.selection.length === 1
+                        ? columnFilterValue.filterValues.selection[0]
+                        : `(${
+                            columnFilterValue.filterValues.selection.length
+                          }) ${columnFilterValue.filterValues.selection.join(
+                            ", "
+                          )}`}
+                    </div>
+                  </Listbox.Button>
+                  <Listbox.Options static className="selection-list">
+                    <li
+                      key={`selection-list-item`}
+                      className={`selection-list-item ${
+                        columnFilterValue.filterValues.selection.length ===
+                          sortedUniqueValues.length && "selected"
+                      }`}
+                      onClick={() => {
+                        if (checkedState === "full") {
+                          column.setFilterValue({
+                            ...columnFilterValue,
+                            activated: "selection",
+                            filterValues: {
+                              ...columnFilterValue.filterValues,
+                              selection: [],
+                            },
+                          } as MultipleFilterValue);
+                        } else {
+                          column.setFilterValue({
+                            ...columnFilterValue,
+                            activated: "selection",
+                            filterValues: {
+                              ...columnFilterValue.filterValues,
+                              selection: sortedUniqueValues,
+                            },
+                          } as MultipleFilterValue);
+                        }
+                      }}
+                    >
+                      {checkedState === "empty" ? (
+                        <BiCheckbox className={"selection-item-icon"} />
+                      ) : checkedState === "full" ? (
+                        <BiCheckboxChecked className={"selection-item-icon"} />
+                      ) : (
+                        <BiCheckboxSquare className={"selection-item-icon"} />
+                      )}
+                      <span>(Select All)</span>
+                    </li>
+                    {sortedUniqueValues.map((v, i) => (
+                      <Listbox.Option key={v} value={v} as={Fragment}>
+                        {({ active, selected }) => (
+                          <li
+                            key={`selection-list-item-${i}-${v}`}
+                            className={`selection-list-item ${
+                              selected && "selected"
+                            }`}
+                          >
+                            {selected ? (
+                              <BiCheckboxChecked
+                                className={"selection-item-icon"}
+                              />
+                            ) : (
+                              <BiCheckbox className={"selection-item-icon"} />
+                            )}
+                            <span>{v}</span>
+                          </li>
+                        )}
                       </Listbox.Option>
                     ))}
                   </Listbox.Options>
                 </Listbox>
               </Tab.Panel>
-              <Tab.Panel>Content 2</Tab.Panel>
-              <Tab.Panel>Content 3</Tab.Panel>
+              <Tab.Panel>
+                <DebouncedInput
+                  type="number"
+                  min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
+                  max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
+                  value={columnFilterValue.filterValues.numericBetween[0] ?? ""}
+                  onChange={(e) =>
+                    column.setFilterValue({
+                      ...columnFilterValue,
+                      activated: "numericBetween",
+                      filterValues: {
+                        ...columnFilterValue.filterValues,
+                        numericBetween: [
+                          e === "" ? null : Number(e),
+                          columnFilterValue.filterValues.numericBetween[1],
+                        ],
+                      },
+                    } as MultipleFilterValue)
+                  }
+                  style={{ width: "100%" }}
+                />
+                <DebouncedInput
+                  type="number"
+                  min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
+                  max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
+                  value={columnFilterValue.filterValues.numericBetween[1] ?? ""}
+                  onChange={(e) =>
+                    column.setFilterValue({
+                      ...columnFilterValue,
+                      activated: "numericBetween",
+                      filterValues: {
+                        ...columnFilterValue.filterValues,
+                        numericBetween: [
+                          columnFilterValue.filterValues.numericBetween[0],
+                          e === "" ? null : Number(e),
+                        ],
+                      },
+                    })
+                  }
+                  style={{ width: "100%" }}
+                />
+              </Tab.Panel>
+              <Tab.Panel></Tab.Panel>
             </Tab.Panels>
           </Tab.Group>
         </Popover.Panel>
@@ -475,9 +611,59 @@ type DataGridProps<ObjT> = {
   columns: ColumnDef<ObjT>[];
   pageOptions?: number[] | "one-page";
 };
+
+type MultipleFilterFunctions = {
+  numericBetween: [number | null, number | null];
+  selection: string[];
+  textContains: string;
+};
+
+type MultipleFilterValue = {
+  activated: keyof MultipleFilterFunctions;
+  filterValues: MultipleFilterFunctions;
+};
+
+const multipleFilter: FilterFn<any> = (
+  row,
+  columnId,
+  value: MultipleFilterValue,
+  addMeta
+) => {
+  if (value.activated === "numericBetween") {
+    const filterValue = value.filterValues[value.activated];
+    const [min, max] = filterValue;
+    const rowValue = row.getValue(columnId) as number;
+    if (min != null && min > rowValue) return false;
+    if (max != null && max < rowValue) return false;
+    return true;
+  }
+  if (value.activated === "selection") {
+    const filterValue = value.filterValues[value.activated];
+    let rowValue = row.getValue(columnId);
+    if (typeof rowValue === "number") {
+      rowValue = String(rowValue);
+    } else if (typeof rowValue !== "string") {
+      return false;
+    }
+    return filterValue.includes(rowValue as string);
+  }
+  return true;
+};
+
+function modifyColumnsFilterFn<ObjT>(column: ColumnDef<ObjT>) {
+  const childColumns = column.columns ?? [];
+  if ((childColumns ?? []).length > 0) {
+    column.columns = childColumns.map(modifyColumnsFilterFn);
+  }
+  if ((column as any).accessorKey) {
+    column.filterFn = multipleFilter;
+  }
+  return column;
+}
+
 function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   const data = props.data;
-  const columns = props.columns;
+  const columns = props.columns.map(modifyColumnsFilterFn);
   const pageOptions = props.pageOptions ?? [10, 20, 30, 40, 50];
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -569,9 +755,11 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     </DivTableRow>
   );
 
-  const [referenceElement, setReferenceElement] = useState<Element|null>(null)
-  const [popperElement, setPopperElement] = useState<HTMLElement|null>(null)
-  const { styles, attributes } = usePopper(referenceElement, popperElement)
+  const [referenceElement, setReferenceElement] = useState<Element | null>(
+    null
+  );
+  const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
+  const { styles, attributes } = usePopper(referenceElement, popperElement);
   return (
     <TableContext.Provider value={{ onAutoSizeColumn }}>
       <div>
