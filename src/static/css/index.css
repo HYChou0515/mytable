@@ -42,9 +42,6 @@ button.myui-clicked {
     margin: 0.4em auto;
   }
 }
-/** {*/
-/*  ;*/
-/*}*/
 
 /*==========tables==========*/
 
@@ -53,7 +50,7 @@ button.myui-clicked {
   box-sizing: border-box;
 }
 
-.tbody {
+.table-body {
   display: block;
   overflow: scroll;
   max-height: 500px;
@@ -79,6 +76,7 @@ button.myui-clicked {
   text-overflow: ellipsis;
   align-items: center;
   display: flex;
+  justify-content: space-between;
   gap: 10px;
 }
 
@@ -99,8 +97,8 @@ button.myui-clicked {
 .resizer {
   position: absolute;
   right: -5px;
-  width: 10px;
-  /*background: rgba(0, 0, 0, 0.5);*/
+  width: 9px;
+  background: rgba(0, 0, 0, 0.5);
   top: 0;
   height: 100%;
   z-index: 1000;
@@ -111,8 +109,29 @@ button.myui-clicked {
 
 /*==========buttons==========*/
 /*icon button*/
+
+* {
+}
+
 .icon-button {
   padding: 0;
+  border: none;
+  background: none;
+}
+
+/*==========popover==========*/
+
+.popover {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.popover-icon-button {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px;
+  gap: 3px; /*compensate left border*/
   border: none;
   background: none;
 }
@@ -161,9 +180,6 @@ button.myui-clicked {
 }
 
 /*==========selection list==========*/
-
-.selection-list-button {
-}
 
 .selection-list {
   margin: 0;

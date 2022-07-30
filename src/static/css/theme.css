@@ -13,6 +13,7 @@
   --body-cell-color-hover: #edf0f0;
   --outer-border-color: #bec3c7;
   --inner-border-color: #d9dcdf;
+  --border-width: 0.5px;
 }
 
 .table-head-cell {
@@ -23,15 +24,22 @@
 }
 
 .table-head-cell {
-  border: 0 var(--outer-border-color) solid;
-  border-top-width: 1px;
-  border-left-width: 1px;
+  border: var(--border-width) var(--outer-border-color) solid;
 }
-.table-row .table-head-cell:last-child {
-  border-right-width: 1px;
-}
-.table-row:last-child .table-head-cell {
-  border-bottom-width: 1px;
+/*.table-row .table-head-cell:first-child {*/
+/*  border-left-width: calc(var(--border-width) * 2);*/
+/*}*/
+/*.table-row:first-child .table-head-cell {*/
+/*  border-top-width: calc(var(--border-width) * 2);*/
+/*}*/
+/*.table-row .table-head-cell:last-child {*/
+/*  border-right-width: calc(var(--border-width) * 2);*/
+/*}*/
+/*.table-row:last-child .table-head-cell {*/
+/*  border-bottom-width: calc(var(--border-width) * 2);*/
+/*}*/
+.table-head {
+  border: var(--border-width) var(--outer-border-color) solid;
 }
 .table-body-cell {
   border: 0 var(--inner-border-color) solid;
@@ -70,7 +78,8 @@
 .table-head-cell {
   color: var(--header-font-color);
   text-align: left;
-  padding-left: 6px;
+  padding-left: 4px;
+  padding-right: 5px; /*compensate left border width 1px*/
 }
 
 .body-icon-button {
@@ -80,6 +89,7 @@
 /*height*/
 * {
   --header-row-height: 28px;
+  --content-height: 18px;
 }
 
 .table-row,
@@ -87,6 +97,10 @@
 .table-body-cell {
   height: var(--header-row-height);
   line-height: var(--header-row-height);
+}
+
+.body-icon-button {
+  height: var(--content-height);
 }
 
 /*==========popover==========*/
@@ -112,7 +126,7 @@
   --selection-list-button-border-color: var(--outer-border-color);
   --selection-list-button-border-size: 1px;
   --selection-list-button-color: #fcfcfe;
-  --selection-list-button-height: calc(1.2rem + 4px);
+  --selection-list-button-height: var(--content-height);
 }
 
 .selection-list {
