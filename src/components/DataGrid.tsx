@@ -101,11 +101,12 @@ function Filter({
   const sortedUniqueValues = React.useMemo(
     () =>
       Array.from(column.getFacetedUniqueValues().keys())
-        .sort()
         .filter((s) => typeof s === "number" || typeof s === "string")
+        .sort()
         .map(String),
     [column.getFacetedUniqueValues()]
   );
+
   let columnFilterValue = column.getFilterValue() as MultipleFilterValue;
   if (columnFilterValue == null) {
     columnFilterValue = {
@@ -127,11 +128,13 @@ function Filter({
     placement: "right-start",
     modifiers: [{ name: "arrow", options: { element: arrowElement } }],
   });
+  const selectedIntersection = sortedUniqueValues.filter((s) =>
+    columnFilterValue.filterValues.selection.includes(s)
+  );
   const checkedState =
-    columnFilterValue.filterValues.selection.length === 0
+    selectedIntersection.length === 0
       ? "empty"
-      : columnFilterValue.filterValues.selection.length ===
-        sortedUniqueValues.length
+      : selectedIntersection.length === sortedUniqueValues.length
       ? "full"
       : "intermediate";
   const title = (
@@ -148,11 +151,9 @@ function Filter({
         ? "(all)"
         : checkedState === "empty"
         ? "(empty)"
-        : columnFilterValue.filterValues.selection.length === 1
-        ? columnFilterValue.filterValues.selection[0]
-        : `(${
-            columnFilterValue.filterValues.selection.length
-          }) ${columnFilterValue.filterValues.selection.join(", ")}`}
+        : selectedIntersection.length === 1
+        ? selectedIntersection[0]
+        : `(${selectedIntersection.length}) ${selectedIntersection.join(", ")}`}
     </div>
   );
 
@@ -195,7 +196,7 @@ function Filter({
             <Tab.Panel>
               <Listbox
                 multiple
-                value={columnFilterValue.filterValues.selection}
+                value={selectedIntersection}
                 onChange={(s) => {
                   column.setFilterValue({
                     ...columnFilterValue,
@@ -211,8 +212,7 @@ function Filter({
                   <li
                     key={`selection-list-item`}
                     className={`selection-list-item ${
-                      columnFilterValue.filterValues.selection.length ===
-                        sortedUniqueValues.length && "selected"
+                      checkedState === "full" && "selected"
                     }`}
                     onClick={() => {
                       if (checkedState === "full") {
