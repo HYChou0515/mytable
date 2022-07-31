@@ -60,11 +60,11 @@ button.myui-clicked {
 .table-row {
   display: flex;
   box-sizing: border-box;
+  position: relative;
 }
 
 .table-row {
   height: 30px;
-  box-sizing: border-box;
 }
 
 .table-head-cell,
@@ -98,7 +98,7 @@ button.myui-clicked {
   position: absolute;
   right: -5px;
   width: 9px;
-  background: rgba(0, 0, 0, 0.5);
+  /*background: rgba(0, 0, 0, 0.5);*/
   top: 0;
   height: 100%;
   z-index: 1000;

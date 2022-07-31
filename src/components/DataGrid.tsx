@@ -447,49 +447,29 @@ function ColumnResizer<ObjT>(
   );
 }
 
-type DivTableProps<ObjT> = {
-  table: Table<ObjT>;
-};
-function DivTable<ObjT>(props: React.PropsWithChildren<DivTableProps<ObjT>>) {
-  const table = props.table;
+function DivTable<ObjT>(
+  props: React.PropsWithChildren<React.InputHTMLAttributes<HTMLDivElement>>
+) {
+  const children = props.children;
+  return <div className={"table"}>{children}</div>;
+}
+function DivTableHead<ObjT>(
+  props: React.PropsWithChildren<React.InputHTMLAttributes<HTMLDivElement>>
+) {
   const children = props.children;
   return (
-    <div
-      {...{
-        className: "table",
-        style: {
-          width: table.getTotalSize(),
-        },
-      }}
-    >
+    <div {...props} className={"table-head"}>
       {children}
     </div>
   );
 }
-function DivTableHead<ObjT>(props: React.PropsWithChildren) {
-  const children = props.children;
-  return <div className={"table-head"}>{children}</div>;
-}
-
-type DivTableRowProps<ObjT> = {
-  key: any;
-};
 
 function DivTableRow<ObjT>(
-  props: React.PropsWithChildren<DivTableRowProps<ObjT>>
+  props: React.PropsWithChildren<React.InputHTMLAttributes<HTMLDivElement>>
 ) {
   const children = props.children;
-  const key = props.key;
   return (
-    <div
-      {...{
-        key: key,
-        className: "table-row",
-        style: {
-          position: "relative",
-        },
-      }}
-    >
+    <div className={"table-row"} {...props}>
       {children}
     </div>
   );
@@ -561,9 +541,15 @@ function DivTableHeadCellFilter<ObjT>(
   );
 }
 
-function DivTableBody<ObjT>(props: React.PropsWithChildren) {
+function DivTableBody<ObjT>(
+  props: React.PropsWithChildren<React.InputHTMLAttributes<HTMLDivElement>>
+) {
   const children = props.children;
-  return <div className={"table-body"}>{children}</div>;
+  return (
+    <div {...props} className={"table-body"}>
+      {children}
+    </div>
+  );
 }
 type DivTableBodyCellProps<ObjT> = {
   cell: Cell<ObjT, unknown>;
@@ -751,7 +737,6 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     allChildColumns.forEach(resizeColumnOfKey);
     table.setColumnSizing(columnSizing);
   };
-
   const headerGroups = table.getHeaderGroups();
   const leafHeaderGroup = headerGroups[headerGroups.length - 1];
   const columnsHead = headerGroups.map((headerGroup) => (
@@ -778,9 +763,13 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     <TableContext.Provider value={{ onAutoSizeColumn }}>
       <div>
         <div>
-          <DivTable<ObjT> table={table}>
+          <DivTable<ObjT>>
             <DivTableHead>{columnsHead}</DivTableHead>
-            <DivTableBody>
+            <DivTableBody
+              style={{
+                width: `calc(${table.getTotalSize()}px + 2*var(--border-width))`,
+              }}
+            >
               {table.getRowModel().rows.map((row) => (
                 <DivTableRow<ObjT> key={row.id}>
                   {row.getVisibleCells().map((cell) => (
