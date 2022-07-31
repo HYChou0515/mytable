@@ -124,11 +124,8 @@ function Filter({
   const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
   const [arrowElement, setArrowElement] = useState<HTMLElement | null>(null);
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
-    placement: "bottom-start",
-    modifiers: [
-      { name: "offset", options: { offset: [0, 10] } },
-      { name: "arrow", options: { element: arrowElement } },
-    ],
+    placement: "right-start",
+    modifiers: [{ name: "arrow", options: { element: arrowElement } }],
   });
   const checkedState =
     columnFilterValue.filterValues.selection.length === 0
