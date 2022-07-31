@@ -137,17 +137,19 @@ function Filter({
         sortedUniqueValues.length
       ? "full"
       : "intermediate";
-  console.log(column.getSize());
   const title = (
     <div
       className="selection-list-button"
       style={{
         display: "block",
         flex: "auto",
-        flexGrow: 0,
+        flexGrow: 1,
+        textAlign: "left",
       }}
     >
-      {columnFilterValue.filterValues.selection.length === 0
+      {checkedState === "full"
+        ? "(all)"
+        : checkedState === "empty"
         ? "(empty)"
         : columnFilterValue.filterValues.selection.length === 1
         ? columnFilterValue.filterValues.selection[0]
