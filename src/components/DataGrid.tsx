@@ -1,5 +1,5 @@
 import React, { Fragment, createContext, useContext, useState } from "react";
-
+import { sort } from "fast-sort";
 import {
   Column,
   Table,
@@ -90,19 +90,31 @@ function Filter({
   column: Column<any, unknown>;
   table: Table<any>;
 }) {
-  const firstValue = table
-    .getPreFilteredRowModel()
-    .flatRows[0]?.getValue(column.id);
-
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [filterType, setFilterType] = useState(typeof firstValue);
-  const [textValue, setTextValue] = useState<string>("");
+  const allValues = React.useMemo(
+    () =>
+      sort(
+        Array.from(
+          new Set(
+            table
+              .getPreFilteredRowModel()
+              .flatRows.map((r) => r.getValue(column.id))
+              .filter((s) => typeof s === "number" || typeof s === "string")
+          )
+        )
+      )
+        .asc()
+        .map(String),
+    [table.getPreFilteredRowModel()]
+  );
 
   const sortedUniqueValues = React.useMemo(
     () =>
-      Array.from(column.getFacetedUniqueValues().keys())
-        .filter((s) => typeof s === "number" || typeof s === "string")
-        .sort()
+      sort(
+        Array.from(column.getFacetedUniqueValues().keys()).filter(
+          (s) => typeof s === "number" || typeof s === "string"
+        )
+      )
+        .asc()
         .map(String),
     [column.getFacetedUniqueValues()]
   );
@@ -113,7 +125,10 @@ function Filter({
       activated: "selection",
       filterValues: {
         numericBetween: [null, null],
-        selection: sortedUniqueValues,
+        selection: allValues.reduce(
+          (pre, cur) => ({ ...pre, [cur]: "selected" }),
+          {}
+        ),
         textContains: "",
       },
     } as MultipleFilterValue;
@@ -128,13 +143,16 @@ function Filter({
     placement: "right-start",
     modifiers: [{ name: "arrow", options: { element: arrowElement } }],
   });
-  const selectedIntersection = sortedUniqueValues.filter((s) =>
-    columnFilterValue.filterValues.selection.includes(s)
+  const selected = Object.entries(columnFilterValue.filterValues.selection)
+    .filter(([k, v]) => v === "selected")
+    .map(([k, v]) => k);
+  const shownAndSelected = sortedUniqueValues.filter((s) =>
+    selected.includes(s)
   );
   const checkedState =
-    selectedIntersection.length === 0
+    selected.length === 0
       ? "empty"
-      : selectedIntersection.length === sortedUniqueValues.length
+      : selected.length === allValues.length
       ? "full"
       : "intermediate";
   const title = (
@@ -151,9 +169,9 @@ function Filter({
         ? "(all)"
         : checkedState === "empty"
         ? "(empty)"
-        : selectedIntersection.length === 1
-        ? selectedIntersection[0]
-        : `(${selectedIntersection.length}) ${selectedIntersection.join(", ")}`}
+        : selected.length === 1
+        ? selected[0]
+        : `(${selected.length}) ${selected.join(", ")}`}
     </div>
   );
 
@@ -196,14 +214,23 @@ function Filter({
             <Tab.Panel>
               <Listbox
                 multiple
-                value={selectedIntersection}
+                value={shownAndSelected}
                 onChange={(s) => {
                   column.setFilterValue({
                     ...columnFilterValue,
                     activated: "selection",
                     filterValues: {
                       ...columnFilterValue.filterValues,
-                      selection: s,
+                      selection: {
+                        ...columnFilterValue.filterValues.selection,
+                        ...sortedUniqueValues.reduce(
+                          (pre, cur) => ({
+                            ...pre,
+                            [cur]: s.includes(cur) ? "selected" : "unselected",
+                          }),
+                          {}
+                        ),
+                      },
                     },
                   } as MultipleFilterValue);
                 }}
@@ -221,7 +248,13 @@ function Filter({
                           activated: "selection",
                           filterValues: {
                             ...columnFilterValue.filterValues,
-                            selection: [],
+                            selection: {
+                              ...columnFilterValue.filterValues.selection,
+                              ...sortedUniqueValues.reduce(
+                                (pre, cur) => ({ ...pre, [cur]: "unselected" }),
+                                {}
+                              ),
+                            },
                           },
                         } as MultipleFilterValue);
                       } else {
@@ -230,7 +263,13 @@ function Filter({
                           activated: "selection",
                           filterValues: {
                             ...columnFilterValue.filterValues,
-                            selection: sortedUniqueValues,
+                            selection: {
+                              ...columnFilterValue.filterValues.selection,
+                              ...allValues.reduce(
+                                (pre, cur) => ({ ...pre, [cur]: "selected" }),
+                                {}
+                              ),
+                            },
                           },
                         } as MultipleFilterValue);
                       }
@@ -613,7 +652,7 @@ type DataGridProps<ObjT> = {
 
 type MultipleFilterFunctions = {
   numericBetween: [number | null, number | null];
-  selection: string[];
+  selection: { [value: string]: "selected" | "unselected" };
   textContains: string;
 };
 
@@ -644,7 +683,7 @@ const multipleFilter: FilterFn<any> = (
     } else if (typeof rowValue !== "string") {
       return false;
     }
-    return filterValue.includes(rowValue as string);
+    return filterValue[rowValue as string] === "selected";
   }
   return true;
 };
