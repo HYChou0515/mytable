@@ -83,6 +83,218 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed;
 };
 
+const getSelectionPanel = ({
+  column,
+  table,
+  allValues,
+  columnFilterValue,
+  sortedUniqueValues,
+}: {
+  column: Column<any, unknown>;
+  table: Table<any>;
+  allValues: string[];
+  columnFilterValue: MultipleFilterValue;
+  sortedUniqueValues: string[];
+}) => {
+  const selected = Object.entries(columnFilterValue.filterValues.selection)
+    .filter(([k, v]) => v === "selected")
+    .map(([k, v]) => k);
+  const shownAndSelected = sortedUniqueValues.filter((s) =>
+    selected.includes(s)
+  );
+  const checkedState =
+    selected.length === 0
+      ? "empty"
+      : selected.length === allValues.length
+      ? "full"
+      : "intermediate";
+  const title = (
+    <div
+      className="selection-list-button"
+      style={{
+        display: "block",
+        flex: "auto",
+        flexGrow: 1,
+        textAlign: "left",
+      }}
+    >
+      {checkedState === "full"
+        ? "(all)"
+        : checkedState === "empty"
+        ? "(empty)"
+        : selected.length === 1
+        ? selected[0]
+        : `(${selected.length}) ${selected.join(", ")}`}
+    </div>
+  );
+  return [
+    title,
+    <Listbox
+      multiple
+      value={shownAndSelected}
+      onChange={(s) => {
+        column.setFilterValue({
+          ...columnFilterValue,
+          activated: "selection",
+          filterValues: {
+            ...columnFilterValue.filterValues,
+            selection: {
+              ...columnFilterValue.filterValues.selection,
+              ...sortedUniqueValues.reduce(
+                (pre, cur) => ({
+                  ...pre,
+                  [cur]: s.includes(cur) ? "selected" : "unselected",
+                }),
+                {}
+              ),
+            },
+          },
+        } as MultipleFilterValue);
+      }}
+    >
+      <Listbox.Options static className="selection-list">
+        <li>
+          <input value={"a"} onChange={(e) => console.log(e.target.value)} />
+        </li>
+        <li
+          key={`selection-list-item`}
+          className={`selection-list-item ${
+            checkedState === "full" && "selected"
+          }`}
+          onClick={() => {
+            if (checkedState === "full") {
+              column.setFilterValue({
+                ...columnFilterValue,
+                activated: "selection",
+                filterValues: {
+                  ...columnFilterValue.filterValues,
+                  selection: {
+                    ...columnFilterValue.filterValues.selection,
+                    ...sortedUniqueValues.reduce(
+                      (pre, cur) => ({ ...pre, [cur]: "unselected" }),
+                      {}
+                    ),
+                  },
+                },
+              } as MultipleFilterValue);
+            } else {
+              column.setFilterValue({
+                ...columnFilterValue,
+                activated: "selection",
+                filterValues: {
+                  ...columnFilterValue.filterValues,
+                  selection: {
+                    ...columnFilterValue.filterValues.selection,
+                    ...allValues.reduce(
+                      (pre, cur) => ({ ...pre, [cur]: "selected" }),
+                      {}
+                    ),
+                  },
+                },
+              } as MultipleFilterValue);
+            }
+          }}
+        >
+          {checkedState === "empty" ? (
+            <BiCheckbox className={"selection-item-icon"} />
+          ) : checkedState === "full" ? (
+            <BiCheckboxChecked className={"selection-item-icon"} />
+          ) : (
+            <BiCheckboxSquare className={"selection-item-icon"} />
+          )}
+          <span>(Select All)</span>
+        </li>
+        {sortedUniqueValues.map((v, i) => (
+          <Listbox.Option key={v} value={v} as={Fragment}>
+            {({ active, selected }) => (
+              <li
+                key={`selection-list-item-${i}-${v}`}
+                className={`selection-list-item ${selected && "selected"}`}
+              >
+                {selected ? (
+                  <BiCheckboxChecked className={"selection-item-icon"} />
+                ) : (
+                  <BiCheckbox className={"selection-item-icon"} />
+                )}
+                <span>{v}</span>
+              </li>
+            )}
+          </Listbox.Option>
+        ))}
+      </Listbox.Options>
+    </Listbox>,
+  ];
+};
+
+const getNumberBetweenPanel = ({
+  column,
+  table,
+  columnFilterValue,
+}: {
+  column: Column<any, unknown>;
+  table: Table<any>;
+  columnFilterValue: MultipleFilterValue;
+}) => {
+  const title = (
+    <div
+      className="selection-list-button"
+      style={{
+        display: "block",
+        flex: "auto",
+        flexGrow: 1,
+        textAlign: "left",
+      }}
+    >
+      {`${columnFilterValue.filterValues.numericBetween[0]}~${columnFilterValue.filterValues.numericBetween[1]}`}
+    </div>
+  );
+  return [
+    title,
+    <>
+      <DebouncedInput
+        type="number"
+        min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
+        max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
+        value={columnFilterValue.filterValues.numericBetween[0] ?? ""}
+        onChange={(e) =>
+          column.setFilterValue({
+            ...columnFilterValue,
+            activated: "numericBetween",
+            filterValues: {
+              ...columnFilterValue.filterValues,
+              numericBetween: [
+                e === "" ? null : Number(e),
+                columnFilterValue.filterValues.numericBetween[1],
+              ],
+            },
+          } as MultipleFilterValue)
+        }
+        style={{ width: "100%" }}
+      />
+      <DebouncedInput
+        type="number"
+        min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
+        max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
+        value={columnFilterValue.filterValues.numericBetween[1] ?? ""}
+        onChange={(e) =>
+          column.setFilterValue({
+            ...columnFilterValue,
+            activated: "numericBetween",
+            filterValues: {
+              ...columnFilterValue.filterValues,
+              numericBetween: [
+                columnFilterValue.filterValues.numericBetween[0],
+                e === "" ? null : Number(e),
+              ],
+            },
+          })
+        }
+        style={{ width: "100%" }}
+      />
+    </>,
+  ];
+};
+
 function Filter({
   column,
   table,
@@ -118,7 +330,6 @@ function Filter({
         .map(String),
     [column.getFacetedUniqueValues()]
   );
-
   let columnFilterValue = column.getFilterValue() as MultipleFilterValue;
   if (columnFilterValue == null) {
     columnFilterValue = {
@@ -134,6 +345,18 @@ function Filter({
     } as MultipleFilterValue;
   }
 
+  const [selectionTitle, selectionPanel] = getSelectionPanel({
+    column,
+    table,
+    allValues,
+    columnFilterValue,
+    sortedUniqueValues,
+  });
+  const [numberBetweenTitle, numberBetweenPanel] = getNumberBetweenPanel({
+    column,
+    table,
+    columnFilterValue,
+  });
   const [referenceElement, setReferenceElement] = useState<Element | null>(
     null
   );
@@ -143,37 +366,6 @@ function Filter({
     placement: "right-start",
     modifiers: [{ name: "arrow", options: { element: arrowElement } }],
   });
-  const selected = Object.entries(columnFilterValue.filterValues.selection)
-    .filter(([k, v]) => v === "selected")
-    .map(([k, v]) => k);
-  const shownAndSelected = sortedUniqueValues.filter((s) =>
-    selected.includes(s)
-  );
-  const checkedState =
-    selected.length === 0
-      ? "empty"
-      : selected.length === allValues.length
-      ? "full"
-      : "intermediate";
-  const title = (
-    <div
-      className="selection-list-button"
-      style={{
-        display: "block",
-        flex: "auto",
-        flexGrow: 1,
-        textAlign: "left",
-      }}
-    >
-      {checkedState === "full"
-        ? "(all)"
-        : checkedState === "empty"
-        ? "(empty)"
-        : selected.length === 1
-        ? selected[0]
-        : `(${selected.length}) ${selected.join(", ")}`}
-    </div>
-  );
 
   return (
     <Popover className={"popover"}>
@@ -184,7 +376,9 @@ function Filter({
         }}
         ref={setReferenceElement}
       >
-        {title}
+        {columnFilterValue.activated === "selection"
+          ? selectionTitle
+          : numberBetweenTitle}
         <div
           style={{
             minWidth: 20,
@@ -211,145 +405,8 @@ function Filter({
             <Tab>Text</Tab>
           </Tab.List>
           <Tab.Panels>
-            <Tab.Panel>
-              <Listbox
-                multiple
-                value={shownAndSelected}
-                onChange={(s) => {
-                  column.setFilterValue({
-                    ...columnFilterValue,
-                    activated: "selection",
-                    filterValues: {
-                      ...columnFilterValue.filterValues,
-                      selection: {
-                        ...columnFilterValue.filterValues.selection,
-                        ...sortedUniqueValues.reduce(
-                          (pre, cur) => ({
-                            ...pre,
-                            [cur]: s.includes(cur) ? "selected" : "unselected",
-                          }),
-                          {}
-                        ),
-                      },
-                    },
-                  } as MultipleFilterValue);
-                }}
-              >
-                <Listbox.Options static className="selection-list">
-                  <li
-                    key={`selection-list-item`}
-                    className={`selection-list-item ${
-                      checkedState === "full" && "selected"
-                    }`}
-                    onClick={() => {
-                      if (checkedState === "full") {
-                        column.setFilterValue({
-                          ...columnFilterValue,
-                          activated: "selection",
-                          filterValues: {
-                            ...columnFilterValue.filterValues,
-                            selection: {
-                              ...columnFilterValue.filterValues.selection,
-                              ...sortedUniqueValues.reduce(
-                                (pre, cur) => ({ ...pre, [cur]: "unselected" }),
-                                {}
-                              ),
-                            },
-                          },
-                        } as MultipleFilterValue);
-                      } else {
-                        column.setFilterValue({
-                          ...columnFilterValue,
-                          activated: "selection",
-                          filterValues: {
-                            ...columnFilterValue.filterValues,
-                            selection: {
-                              ...columnFilterValue.filterValues.selection,
-                              ...allValues.reduce(
-                                (pre, cur) => ({ ...pre, [cur]: "selected" }),
-                                {}
-                              ),
-                            },
-                          },
-                        } as MultipleFilterValue);
-                      }
-                    }}
-                  >
-                    {checkedState === "empty" ? (
-                      <BiCheckbox className={"selection-item-icon"} />
-                    ) : checkedState === "full" ? (
-                      <BiCheckboxChecked className={"selection-item-icon"} />
-                    ) : (
-                      <BiCheckboxSquare className={"selection-item-icon"} />
-                    )}
-                    <span>(Select All)</span>
-                  </li>
-                  {sortedUniqueValues.map((v, i) => (
-                    <Listbox.Option key={v} value={v} as={Fragment}>
-                      {({ active, selected }) => (
-                        <li
-                          key={`selection-list-item-${i}-${v}`}
-                          className={`selection-list-item ${
-                            selected && "selected"
-                          }`}
-                        >
-                          {selected ? (
-                            <BiCheckboxChecked
-                              className={"selection-item-icon"}
-                            />
-                          ) : (
-                            <BiCheckbox className={"selection-item-icon"} />
-                          )}
-                          <span>{v}</span>
-                        </li>
-                      )}
-                    </Listbox.Option>
-                  ))}
-                </Listbox.Options>
-              </Listbox>
-            </Tab.Panel>
-            <Tab.Panel>
-              <DebouncedInput
-                type="number"
-                min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
-                max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
-                value={columnFilterValue.filterValues.numericBetween[0] ?? ""}
-                onChange={(e) =>
-                  column.setFilterValue({
-                    ...columnFilterValue,
-                    activated: "numericBetween",
-                    filterValues: {
-                      ...columnFilterValue.filterValues,
-                      numericBetween: [
-                        e === "" ? null : Number(e),
-                        columnFilterValue.filterValues.numericBetween[1],
-                      ],
-                    },
-                  } as MultipleFilterValue)
-                }
-                style={{ width: "100%" }}
-              />
-              <DebouncedInput
-                type="number"
-                min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
-                max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
-                value={columnFilterValue.filterValues.numericBetween[1] ?? ""}
-                onChange={(e) =>
-                  column.setFilterValue({
-                    ...columnFilterValue,
-                    activated: "numericBetween",
-                    filterValues: {
-                      ...columnFilterValue.filterValues,
-                      numericBetween: [
-                        columnFilterValue.filterValues.numericBetween[0],
-                        e === "" ? null : Number(e),
-                      ],
-                    },
-                  })
-                }
-                style={{ width: "100%" }}
-              />
-            </Tab.Panel>
+            <Tab.Panel>{selectionPanel}</Tab.Panel>
+            <Tab.Panel>{numberBetweenPanel}</Tab.Panel>
             <Tab.Panel></Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
