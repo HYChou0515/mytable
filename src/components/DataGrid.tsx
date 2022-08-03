@@ -48,6 +48,7 @@ import {
   compareItems,
 } from "@tanstack/match-sorter-utils";
 import { getTextWidth, getCanvasFont } from "../utils/textWidth";
+import { FixedSizeList } from "react-window";
 
 // Objectives
 // [V] 1. show data in data grid
@@ -637,13 +638,33 @@ function DivTableHeadCellFilter<ObjT>(
 }
 
 function DivTableBody<ObjT>(
-  props: React.PropsWithChildren<React.InputHTMLAttributes<HTMLDivElement>>
+  props: React.PropsWithChildren<{ table: Table<ObjT> }>
 ) {
-  const children = props.children;
+  const table = props.table;
+  const rowHeight = 28;
   return (
-    <div {...props} className={"table-body"}>
-      {children}
-    </div>
+    <FixedSizeList
+      itemData={table.getRowModel().rows}
+      itemCount={table.getRowModel().rows.length}
+      itemSize={rowHeight}
+      height={Math.min(700, table.getRowModel().rows.length * rowHeight)}
+      width={400}
+      className={"table-body"}
+      style={{
+        width: `calc(${table.getTotalSize()}px + 2*var(--border-width))`,
+      }}
+    >
+      {({ data, index, style }) => {
+        const row = data[index];
+        return (
+          <DivTableRow<ObjT> key={row.id} style={style}>
+            {row.getVisibleCells().map((cell) => (
+              <DivTableBodyCell cell={cell} />
+            ))}
+          </DivTableRow>
+        );
+      }}
+    </FixedSizeList>
   );
 }
 type DivTableBodyCellProps<ObjT> = {
@@ -860,19 +881,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
         <div>
           <DivTable<ObjT>>
             <DivTableHead>{columnsHead}</DivTableHead>
-            <DivTableBody
-              style={{
-                width: `calc(${table.getTotalSize()}px + 2*var(--border-width))`,
-              }}
-            >
-              {table.getRowModel().rows.map((row) => (
-                <DivTableRow<ObjT> key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <DivTableBodyCell cell={cell} />
-                  ))}
-                </DivTableRow>
-              ))}
-            </DivTableBody>
+            <DivTableBody table={table} />
           </DivTable>
         </div>
         <pre>{JSON.stringify(table.getState(), null, 2)}</pre>
