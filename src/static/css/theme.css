@@ -114,7 +114,7 @@
 /*==========selection list==========*/
 * {
   --selection-list-item-height: 1.5rem;
-  --selection-list-max-height: calc(5 * var(--selection-list-item-height));
+  --selection-list-max-height: calc(8 * var(--selection-list-item-height));
   --selection-list-button-border-color: var(--outer-border-color);
   --selection-list-button-border-size: 1px;
   --selection-list-button-color: #fcfcfe;

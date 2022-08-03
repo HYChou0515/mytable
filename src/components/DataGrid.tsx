@@ -49,6 +49,7 @@ import {
 } from "@tanstack/match-sorter-utils";
 import { getTextWidth, getCanvasFont } from "../utils/textWidth";
 import { FixedSizeList } from "react-window";
+import { useEffect } from "../../../../Library/Application Support/JetBrains/Toolbox/apps/WebStorm/ch-0/221.5921.27/WebStorm.app/Contents/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external/react";
 
 // Objectives
 // [V] 1. show data in data grid
@@ -84,52 +85,26 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   return itemRank.passed;
 };
 
-const getSelectionPanel = ({
-  column,
-  table,
-  allValues,
-  columnFilterValue,
-  sortedUniqueValues,
-}: {
+const SelectionPanel: React.FC<{
   column: Column<any, unknown>;
-  table: Table<any>;
   allValues: string[];
   columnFilterValue: MultipleFilterValue;
   sortedUniqueValues: string[];
+  selected: string[];
+  checkedState: "empty" | "full" | "intermediate";
+}> = ({
+  column,
+  allValues,
+  columnFilterValue,
+  sortedUniqueValues,
+  selected,
+  checkedState,
 }) => {
-  const selected = Object.entries(columnFilterValue.filterValues.selection)
-    .filter(([k, v]) => v === "selected")
-    .map(([k, v]) => k);
   const shownAndSelected = sortedUniqueValues.filter((s) =>
     selected.includes(s)
   );
-  const checkedState =
-    selected.length === 0
-      ? "empty"
-      : selected.length === allValues.length
-      ? "full"
-      : "intermediate";
-  const title = (
-    <div
-      className="selection-list-button"
-      style={{
-        display: "block",
-        flex: "auto",
-        flexGrow: 1,
-        textAlign: "left",
-      }}
-    >
-      {checkedState === "full"
-        ? "(all)"
-        : checkedState === "empty"
-        ? "(empty)"
-        : selected.length === 1
-        ? selected[0]
-        : `(${selected.length}) ${selected.join(", ")}`}
-    </div>
-  );
-  return [
-    title,
+  const [optionFilterValue, setOptionalFilterValue] = useState("");
+  return (
     <Listbox
       multiple
       value={shownAndSelected}
@@ -153,10 +128,13 @@ const getSelectionPanel = ({
         } as MultipleFilterValue);
       }}
     >
+      <DebouncedInput
+        value={optionFilterValue}
+        type={"text"}
+        placeholder={"search..."}
+        onChange={(value) => setOptionalFilterValue(String(value))}
+      />
       <Listbox.Options static className="selection-list">
-        <li>
-          <input value={"a"} onChange={(e) => console.log(e.target.value)} />
-        </li>
         <li
           key={`selection-list-item`}
           className={`selection-list-item ${
@@ -205,25 +183,82 @@ const getSelectionPanel = ({
           )}
           <span>(Select All)</span>
         </li>
-        {sortedUniqueValues.map((v, i) => (
-          <Listbox.Option key={v} value={v} as={Fragment}>
-            {({ active, selected }) => (
-              <li
-                key={`selection-list-item-${i}-${v}`}
-                className={`selection-list-item ${selected && "selected"}`}
-              >
-                {selected ? (
-                  <BiCheckboxChecked className={"selection-item-icon"} />
-                ) : (
-                  <BiCheckbox className={"selection-item-icon"} />
-                )}
-                <span>{v}</span>
-              </li>
-            )}
-          </Listbox.Option>
-        ))}
+        {sortedUniqueValues
+          .filter((v) => rankItem(v, optionFilterValue).passed)
+          .map((v, i) => (
+            <Listbox.Option key={v} value={v} as={Fragment}>
+              {({ active, selected }) => (
+                <li
+                  key={`selection-list-item-${i}-${v}`}
+                  className={`selection-list-item ${selected && "selected"}`}
+                >
+                  {selected ? (
+                    <BiCheckboxChecked className={"selection-item-icon"} />
+                  ) : (
+                    <BiCheckbox className={"selection-item-icon"} />
+                  )}
+                  <span>{v}</span>
+                </li>
+              )}
+            </Listbox.Option>
+          ))}
       </Listbox.Options>
-    </Listbox>,
+    </Listbox>
+  );
+};
+const getSelectionPanel = ({
+  column,
+  table,
+  allValues,
+  columnFilterValue,
+  sortedUniqueValues,
+}: {
+  column: Column<any, unknown>;
+  table: Table<any>;
+  allValues: string[];
+  columnFilterValue: MultipleFilterValue;
+  sortedUniqueValues: string[];
+}) => {
+  const selected = Object.entries(columnFilterValue.filterValues.selection)
+    .filter(([k, v]) => v === "selected")
+    .map(([k, v]) => k);
+  const checkedState =
+    selected.length === 0
+      ? "empty"
+      : selected.length === allValues.length
+      ? "full"
+      : "intermediate";
+  const title = (
+    <div
+      className="selection-list-button"
+      style={{
+        display: "block",
+        flex: "auto",
+        flexGrow: 1,
+        textAlign: "left",
+      }}
+    >
+      {checkedState === "full"
+        ? "(all)"
+        : checkedState === "empty"
+        ? "(empty)"
+        : selected.length === 1
+        ? selected[0]
+        : `(${selected.length}) ${selected.join(", ")}`}
+    </div>
+  );
+  return [
+    title,
+    <SelectionPanel
+      {...{
+        column,
+        allValues,
+        columnFilterValue,
+        sortedUniqueValues,
+        selected,
+        checkedState,
+      }}
+    />,
   ];
 };
 
