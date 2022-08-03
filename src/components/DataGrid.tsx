@@ -434,7 +434,14 @@ function Filter({
           ref={setArrowElement}
           style={styles.arrow}
         />
-        <Tab.Group>
+        <Tab.Group
+          onChange={(index) => {
+            column.setFilterValue({
+              ...columnFilterValue,
+              activated: index === 0 ? "selection" : "numericBetween",
+            });
+          }}
+        >
           <Tab.List>
             <Tab>Select</Tab>
             <Tab>Number</Tab>
