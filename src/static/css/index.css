@@ -51,8 +51,8 @@ button.myui-clicked {
 }
 
 .table-body {
-  display: block;
-  overflow: scroll;
+  /*display: block;*/
+  /*overflow: scroll;*/
   max-height: 500px;
   box-sizing: border-box;
 }

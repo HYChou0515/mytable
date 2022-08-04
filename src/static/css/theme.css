@@ -49,11 +49,11 @@
   border-bottom-width: 0;
 }
 
-.table-row:nth-child(odd) .table-body-cell {
+.table-row.odd-child .table-body-cell {
   background-color: var(--body-cell-color-odd);
 }
 
-.table-row:nth-child(even) .table-body-cell {
+.table-row.even-child .table-body-cell {
   background-color: var(--body-cell-color-even);
 }
 

@@ -1,4 +1,12 @@
-import React, { Fragment, createContext, useContext, useState } from "react";
+import React, {
+  Fragment,
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  HTMLAttributes,
+} from "react";
 import { sort } from "fast-sort";
 import {
   Column,
@@ -47,10 +55,10 @@ import {
   rankItem,
   compareItems,
 } from "@tanstack/match-sorter-utils";
-import { getTextWidth, getCanvasFont } from "../utils/textWidth";
 import { FixedSizeList } from "react-window";
-import { useEffect } from "../../../../Library/Application Support/JetBrains/Toolbox/apps/WebStorm/ch-0/221.5921.27/WebStorm.app/Contents/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external/react";
-
+import PerfectScrollbar from "react-perfect-scrollbar";
+import { getTextWidth, getCanvasFont } from "../utils/textWidth";
+import "react-perfect-scrollbar/dist/css/styles.css";
 // Objectives
 // [V] 1. show data in data grid
 // [V] 2. filter at column header
@@ -607,7 +615,7 @@ function DivTableRow<ObjT>(
 ) {
   const children = props.children;
   return (
-    <div className={"table-row"} {...props}>
+    <div {...props} className={`table-row ${props.className ?? ""}`}>
       {children}
     </div>
   );
@@ -679,6 +687,36 @@ function DivTableHeadCellFilter<ObjT>(
   );
 }
 
+const CustomScrollbars: React.FC<any> = ({
+  onScroll,
+  forwardedRef,
+  style,
+  children,
+}) => {
+  const refSetter = useCallback((scrollbarsRef: any) => {
+    if (scrollbarsRef) {
+      forwardedRef(scrollbarsRef.view);
+    } else {
+      forwardedRef(null);
+    }
+  }, []);
+
+  return (
+    <PerfectScrollbar
+      ref={refSetter}
+      style={{ ...style, overflow: "hidden" }}
+      onScroll={onScroll}
+      className={"table-body"}
+    >
+      {children}
+    </PerfectScrollbar>
+  );
+};
+
+const CustomScrollbarsVirtualList = React.forwardRef((props, ref) => (
+  <CustomScrollbars {...props} forwardedRef={ref} />
+));
+
 function DivTableBody<ObjT>(
   props: React.PropsWithChildren<{ table: Table<ObjT> }>
 ) {
@@ -686,20 +724,21 @@ function DivTableBody<ObjT>(
   const rowHeight = 28;
   return (
     <FixedSizeList
+      outerElementType={CustomScrollbarsVirtualList}
       itemData={table.getRowModel().rows}
       itemCount={table.getRowModel().rows.length}
       itemSize={rowHeight}
       height={Math.min(700, table.getRowModel().rows.length * rowHeight)}
-      width={400}
-      className={"table-body"}
-      style={{
-        width: `calc(${table.getTotalSize()}px + 2*var(--border-width))`,
-      }}
+      width={`calc(${table.getTotalSize()}px + 2*var(--border-width))`}
     >
       {({ data, index, style }) => {
         const row = data[index];
         return (
-          <DivTableRow<ObjT> key={row.id} style={style}>
+          <DivTableRow<ObjT>
+            key={row.id}
+            style={style}
+            className={index % 2 === 0 ? "even-child" : "odd-child"}
+          >
             {row.getVisibleCells().map((cell) => (
               <DivTableBodyCell cell={cell} />
             ))}
