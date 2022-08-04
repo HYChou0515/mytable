@@ -32,6 +32,7 @@ import {
   Header,
   HeaderGroup,
   Cell,
+  Row,
 } from "@tanstack/react-table";
 import { Popover, Tab, Listbox } from "@headlessui/react";
 import { usePopper } from "react-popper";
@@ -55,7 +56,7 @@ import {
   rankItem,
   compareItems,
 } from "@tanstack/match-sorter-utils";
-import { FixedSizeList } from "react-window";
+import { FixedSizeList, ListChildComponentProps } from "react-window";
 import PerfectScrollbar from "react-perfect-scrollbar";
 import { getTextWidth, getCanvasFont } from "../utils/textWidth";
 import "react-perfect-scrollbar/dist/css/styles.css";
@@ -72,6 +73,36 @@ import "react-perfect-scrollbar/dist/css/styles.css";
 
 const GroupIcon: React.FC = () => <VscListTree />;
 const CloseIcon: React.FC = () => <GrClose />;
+
+const CustomScrollbars: React.FC<any> = ({
+  onScroll,
+  forwardedRef,
+  style,
+  children,
+}) => {
+  const refSetter = useCallback((scrollbarsRef: any) => {
+    if (scrollbarsRef) {
+      forwardedRef(scrollbarsRef.view);
+    } else {
+      forwardedRef(null);
+    }
+  }, []);
+
+  return (
+    <PerfectScrollbar
+      ref={refSetter}
+      style={{ ...style, overflow: "hidden" }}
+      onScroll={onScroll}
+      className={"table-body"}
+    >
+      {children}
+    </PerfectScrollbar>
+  );
+};
+
+const CustomScrollbarsVirtualList = React.forwardRef((props, ref) => (
+  <CustomScrollbars {...props} forwardedRef={ref} />
+));
 
 type TableContextProps = {
   onAutoSizeColumn: (header: Header<any, unknown>) => void;
@@ -599,16 +630,6 @@ function DivTable<ObjT>(
   const children = props.children;
   return <div className={"table"}>{children}</div>;
 }
-function DivTableHead<ObjT>(
-  props: React.PropsWithChildren<React.InputHTMLAttributes<HTMLDivElement>>
-) {
-  const children = props.children;
-  return (
-    <div {...props} className={"table-head"}>
-      {children}
-    </div>
-  );
-}
 
 function DivTableRow<ObjT>(
   props: React.PropsWithChildren<React.InputHTMLAttributes<HTMLDivElement>>
@@ -617,6 +638,64 @@ function DivTableRow<ObjT>(
   return (
     <div {...props} className={`table-row ${props.className ?? ""}`}>
       {children}
+    </div>
+  );
+}
+
+type DivTableHeadCellFilterProps<ObjT> = {
+  header: Header<ObjT, unknown>;
+  table: Table<ObjT>;
+};
+function DivTableHeadCellFilter<ObjT>(
+  props: React.PropsWithChildren<DivTableHeadCellFilterProps<ObjT>>
+) {
+  const header = props.header;
+  const table = props.table;
+  return (
+    <div
+      key={header.id}
+      className={"table-head-cell"}
+      style={{
+        left: header.getStart(),
+        width: header.getSize(),
+      }}
+    >
+      {header.column.getCanFilter() ? (
+        <Filter column={header.column} table={table} />
+      ) : null}
+    </div>
+  );
+}
+
+type DivTableHeadProps<ObjT> = {
+  table: Table<ObjT>;
+};
+
+function DivTableHead<ObjT>(
+  props: React.PropsWithChildren<
+    DivTableHeadProps<ObjT> & React.InputHTMLAttributes<HTMLDivElement>
+  >
+) {
+  const table = props.table;
+  const headerGroups = table.getHeaderGroups();
+  const leafHeaderGroup = headerGroups[headerGroups.length - 1];
+  const columnsHead = headerGroups.map((headerGroup) => (
+    <DivTableRow<ObjT> key={headerGroup.id}>
+      {headerGroup.headers.map((header) => (
+        <DivTableHeadCell header={header} />
+      ))}
+    </DivTableRow>
+  ));
+  columnsHead.push(
+    <DivTableRow<ObjT> key={`${leafHeaderGroup.id}-filter`}>
+      {leafHeaderGroup.headers.map((header) => (
+        <DivTableHeadCellFilter header={header} table={table} />
+      ))}
+    </DivTableRow>
+  );
+  return (
+    <div {...props} className={"table-head"}>
+      {columnsHead}
     </div>
   );
 }
@@ -662,60 +741,25 @@ function DivTableHeadCell<ObjT>(
   );
 }
 
-type DivTableHeadCellFilterProps<ObjT> = {
-  header: Header<ObjT, unknown>;
-  table: Table<ObjT>;
+type DivTableBodyRowProps<ObjT> = {
+  row: Row<ObjT>;
 };
-function DivTableHeadCellFilter<ObjT>(
-  props: React.PropsWithChildren<DivTableHeadCellFilterProps<ObjT>>
+
+function _DivTableBodyRow<ObjT>(
+  props: React.PropsWithChildren<
+    DivTableBodyRowProps<ObjT> & React.InputHTMLAttributes<HTMLDivElement>
+  >
 ) {
-  const header = props.header;
-  const table = props.table;
+  const row = props.row;
   return (
-    <div
-      key={header.id}
-      className={"table-head-cell"}
-      style={{
-        left: header.getStart(),
-        width: header.getSize(),
-      }}
-    >
-      {header.column.getCanFilter() ? (
-        <Filter column={header.column} table={table} />
-      ) : null}
-    </div>
+    <DivTableRow<ObjT> {...props}>
+      {row.getVisibleCells().map((cell) => (
+        <DivTableBodyCell cell={cell} />
+      ))}
+    </DivTableRow>
   );
 }
-
-const CustomScrollbars: React.FC<any> = ({
-  onScroll,
-  forwardedRef,
-  style,
-  children,
-}) => {
-  const refSetter = useCallback((scrollbarsRef: any) => {
-    if (scrollbarsRef) {
-      forwardedRef(scrollbarsRef.view);
-    } else {
-      forwardedRef(null);
-    }
-  }, []);
-
-  return (
-    <PerfectScrollbar
-      ref={refSetter}
-      style={{ ...style, overflow: "hidden" }}
-      onScroll={onScroll}
-      className={"table-body"}
-    >
-      {children}
-    </PerfectScrollbar>
-  );
-};
-
-const CustomScrollbarsVirtualList = React.forwardRef((props, ref) => (
-  <CustomScrollbars {...props} forwardedRef={ref} />
-));
+const DivTableBodyRow = React.memo(_DivTableBodyRow) as typeof _DivTableBodyRow;
 
 function DivTableBody<ObjT>(
   props: React.PropsWithChildren<{ table: Table<ObjT> }>
@@ -723,7 +767,7 @@ function DivTableBody<ObjT>(
   const table = props.table;
   const rowHeight = 28;
   return (
-    <FixedSizeList
+    <FixedSizeList<Row<ObjT>[]>
       outerElementType={CustomScrollbarsVirtualList}
       itemData={table.getRowModel().rows}
       itemCount={table.getRowModel().rows.length}
@@ -731,18 +775,15 @@ function DivTableBody<ObjT>(
       height={Math.min(700, table.getRowModel().rows.length * rowHeight)}
       width={`calc(${table.getTotalSize()}px + 2*var(--border-width))`}
     >
-      {({ data, index, style }) => {
+      {({ data, index, style }: ListChildComponentProps<Row<ObjT>[]>) => {
         const row = data[index];
         return (
-          <DivTableRow<ObjT>
+          <DivTableBodyRow<ObjT>
             key={row.id}
             style={style}
             className={index % 2 === 0 ? "even-child" : "odd-child"}
-          >
-            {row.getVisibleCells().map((cell) => (
-              <DivTableBodyCell cell={cell} />
-            ))}
-          </DivTableRow>
+            row={row}
+          />
         );
       }}
     </FixedSizeList>
@@ -934,34 +975,12 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     allChildColumns.forEach(resizeColumnOfKey);
     table.setColumnSizing(columnSizing);
   };
-  const headerGroups = table.getHeaderGroups();
-  const leafHeaderGroup = headerGroups[headerGroups.length - 1];
-  const columnsHead = headerGroups.map((headerGroup) => (
-    <DivTableRow<ObjT> key={headerGroup.id}>
-      {headerGroup.headers.map((header) => (
-        <DivTableHeadCell header={header} />
-      ))}
-    </DivTableRow>
-  ));
-  columnsHead.push(
-    <DivTableRow<ObjT> key={`${leafHeaderGroup.id}-filter`}>
-      {leafHeaderGroup.headers.map((header) => (
-        <DivTableHeadCellFilter header={header} table={table} />
-      ))}
-    </DivTableRow>
-  );
-
-  const [referenceElement, setReferenceElement] = useState<Element | null>(
-    null
-  );
-  const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
-  const { styles, attributes } = usePopper(referenceElement, popperElement);
   return (
     <TableContext.Provider value={{ onAutoSizeColumn }}>
       <div>
         <div>
           <DivTable<ObjT>>
-            <DivTableHead>{columnsHead}</DivTableHead>
+            <DivTableHead table={table} />
             <DivTableBody table={table} />
           </DivTable>
         </div>
