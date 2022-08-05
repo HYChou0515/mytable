@@ -11,7 +11,7 @@ import {
 } from "react-icons/bi";
 import { rankItem } from "@tanstack/match-sorter-utils";
 
-import { MultipleFilterValue } from "./types";
+import { MultipleFilterFunctions, MultipleFilterValue } from "./types";
 import VirtualList from "./VirtualList";
 
 // A debounced input react component
@@ -245,15 +245,14 @@ const getSelectionPanel = ({
   ];
 };
 
-const getNumberBetweenPanel = ({
+const getNumericFilterPanel = ({
   column,
-  table,
   columnFilterValue,
 }: {
   column: Column<any, unknown>;
-  table: Table<any>;
   columnFilterValue: MultipleFilterValue;
 }) => {
+  const [minValue, maxValue] = columnFilterValue.filterValues.numericFilter;
   const title = (
     <div
       className="selection-list-button"
@@ -264,27 +263,30 @@ const getNumberBetweenPanel = ({
         textAlign: "left",
       }}
     >
-      {`${columnFilterValue.filterValues.numericBetween[0]}~${columnFilterValue.filterValues.numericBetween[1]}`}
+      {minValue == null && maxValue == null
+        ? "(all)"
+        : minValue == null
+        ? `≤ ${maxValue}`
+        : maxValue == null
+        ? `≥ ${minValue}`
+        : `${minValue} ~ ${maxValue}`}
     </div>
   );
   return [
     title,
-    <>
+    <div style={{ width: "100%" }}>
       <DebouncedInput
         type="number"
         min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
         max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
-        value={columnFilterValue.filterValues.numericBetween[0] ?? ""}
+        value={minValue ?? ""}
         onChange={(e) =>
           column.setFilterValue({
             ...columnFilterValue,
-            activated: "numericBetween",
+            activated: "numericFilter",
             filterValues: {
               ...columnFilterValue.filterValues,
-              numericBetween: [
-                e === "" ? null : Number(e),
-                columnFilterValue.filterValues.numericBetween[1],
-              ],
+              numericFilter: [e === "" ? null : Number(e), maxValue],
             },
           } as MultipleFilterValue)
         }
@@ -294,23 +296,20 @@ const getNumberBetweenPanel = ({
         type="number"
         min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
         max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
-        value={columnFilterValue.filterValues.numericBetween[1] ?? ""}
+        value={maxValue ?? ""}
         onChange={(e) =>
           column.setFilterValue({
             ...columnFilterValue,
-            activated: "numericBetween",
+            activated: "numericFilter",
             filterValues: {
               ...columnFilterValue.filterValues,
-              numericBetween: [
-                columnFilterValue.filterValues.numericBetween[0],
-                e === "" ? null : Number(e),
-              ],
+              numericFilter: [minValue, e === "" ? null : Number(e)],
             },
           })
         }
         style={{ width: "100%" }}
       />
-    </>,
+    </div>,
   ];
 };
 
@@ -342,7 +341,7 @@ function Filter({
     () => ({
       activated: "selection",
       filterValues: {
-        numericBetween: [null, null],
+        numericFilter: [null, null],
         selection: allValues.reduce(
           (pre, cur) => ({ ...pre, [cur]: "selected" }),
           {}
@@ -376,11 +375,35 @@ function Filter({
     columnFilterValue,
     sortedUniqueValues,
   });
-  const [numberBetweenTitle, numberBetweenPanel] = getNumberBetweenPanel({
+  const [numericFilterTitle, numericFilterPanel] = getNumericFilterPanel({
     column,
-    table,
     columnFilterValue,
   });
+
+  const tabs: (keyof MultipleFilterFunctions)[] = [
+    "selection",
+    "numericFilter",
+    "textContains",
+  ];
+  const tabIndex = tabs
+    .map(
+      (t: keyof MultipleFilterFunctions, i) =>
+        [t, i] as [keyof MultipleFilterFunctions, number]
+    )
+    .reduce(
+      (pre, [t, i]) => ({
+        [t]: i,
+        ...pre,
+      }),
+      {}
+    ) as { [keys in keyof MultipleFilterFunctions]: number };
+
+  const ButtonTitle = {
+    selection: selectionTitle,
+    numericFilter: numericFilterTitle,
+    textContains: "text",
+  }[columnFilterValue.activated];
+
   const [referenceElement, setReferenceElement] = useState<Element | null>(
     null
   );
@@ -400,9 +423,7 @@ function Filter({
         }}
         ref={setReferenceElement}
       >
-        {columnFilterValue.activated === "selection"
-          ? selectionTitle
-          : numberBetweenTitle}
+        {ButtonTitle}
         <div
           style={{
             minWidth: 20,
@@ -426,9 +447,10 @@ function Filter({
           onChange={(index) => {
             column.setFilterValue({
               ...columnFilterValue,
-              activated: index === 0 ? "selection" : "numericBetween",
+              activated: tabs[index],
             });
           }}
+          defaultIndex={tabIndex[columnFilterValue.activated]}
         >
           <Tab.List>
             <Tab>Select</Tab>
@@ -437,7 +459,7 @@ function Filter({
           </Tab.List>
           <Tab.Panels>
             <Tab.Panel>{selectionPanel}</Tab.Panel>
-            <Tab.Panel>{numberBetweenPanel}</Tab.Panel>
+            <Tab.Panel>{numericFilterPanel}</Tab.Panel>
             <Tab.Panel></Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

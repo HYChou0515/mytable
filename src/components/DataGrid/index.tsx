@@ -283,7 +283,7 @@ const multipleFilter: FilterFn<any> = (
   value: MultipleFilterValue,
   addMeta
 ) => {
-  if (value.activated === "numericBetween") {
+  if (value.activated === "numericFilter") {
     const filterValue = value.filterValues[value.activated];
     const [min, max] = filterValue;
     const rowValue = row.getValue(columnId) as number;

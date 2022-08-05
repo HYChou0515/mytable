@@ -11,7 +11,7 @@ export type DataGridProps<ObjT> = {
 };
 
 export type MultipleFilterFunctions = {
-  numericBetween: [number | null, number | null];
+  numericFilter: [number | null, number | null];
   selection: { [value: string]: "selected" | "unselected" };
   textContains: string;
 };
