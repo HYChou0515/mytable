@@ -21,6 +21,7 @@ const CustomScrollbars: React.FC<any> = ({
       ref={refSetter}
       style={{ ...style, overflow: "hidden" }}
       onScroll={onScroll}
+      options={{ minScrollbarLength: 30 }}
     >
       {children}
     </PerfectScrollbar>
