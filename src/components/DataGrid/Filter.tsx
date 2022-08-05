@@ -360,6 +360,7 @@ const getNumericFilterPanel = ({
         min={facetMin}
         max={facetMax}
         value={minValue ?? ""}
+        placeholder={"from..."}
         onChange={(e) =>
           column.setFilterValue({
             ...columnFilterValue,
@@ -377,6 +378,7 @@ const getNumericFilterPanel = ({
         min={facetMin}
         max={facetMax}
         value={maxValue ?? ""}
+        placeholder={"to..."}
         onChange={(e) =>
           column.setFilterValue({
             ...columnFilterValue,
