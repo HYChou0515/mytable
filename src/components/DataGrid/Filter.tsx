@@ -270,13 +270,11 @@ const SelectionPanel = ({
 
 const getSelectionPanel = ({
   column,
-  table,
   allValues,
   columnFilterValue,
   sortedUniqueValues,
 }: {
   column: Column<any, unknown>;
-  table: Table<any>;
   allValues: string[];
   columnFilterValue: MultipleFilterValue;
   sortedUniqueValues: string[];
@@ -596,7 +594,6 @@ function Filter({
 
   const [selectionTitle, selectionPanel] = getSelectionPanel({
     column,
-    table,
     allValues,
     columnFilterValue,
     sortedUniqueValues,
@@ -682,10 +679,28 @@ function Filter({
           }}
           defaultIndex={tabIndex[columnFilterValue.activated]}
         >
-          <Tab.List>
-            <Tab>Select</Tab>
-            <Tab>Number</Tab>
-            <Tab>Text</Tab>
+          <Tab.List className={"tabs-header"}>
+            <Tab
+              className={`tab-button ${
+                columnFilterValue.activated === "selection" && "selected"
+              }`}
+            >
+              <span className={`tab-button-content`}>Select</span>
+            </Tab>
+            <Tab
+              className={`tab-button ${
+                columnFilterValue.activated === "numericFilter" && "selected"
+              }`}
+            >
+              <span className={`tab-button-content`}>Number</span>
+            </Tab>
+            <Tab
+              className={`tab-button ${
+                columnFilterValue.activated === "textualFilter" && "selected"
+              }`}
+            >
+              <span className={`tab-button-content`}>Text</span>
+            </Tab>
           </Tab.List>
           <Tab.Panels>
             <Tab.Panel>{selectionPanel}</Tab.Panel>

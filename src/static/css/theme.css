@@ -98,17 +98,45 @@
 /*==========popover==========*/
 * {
   --popover-border-color: var(--outer-border-color);
-  --popover-background-color: var(--body-cell-color-even);
+  --popover-background-color: #ffffff;
 }
 
 .popover-panel {
   z-index: 3000;
   border-radius: 3px;
-  padding-left: 5px;
-  padding-right: 5px;
+  padding: 0;
+  /*padding-left: 5px;*/
+  /*padding-right: 5px;*/
   border: 1px var(--popover-border-color) solid;
   background-color: var(--popover-background-color);
   box-shadow: 5px 5px 5px;
+}
+
+.tabs-header {
+  border-bottom: 1px var(--outer-border-color) solid;
+  background-color: var(--header-cell-color);
+}
+.tab-button {
+  position: relative;
+  margin: 4px 4px -1px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  padding: 8px 4px;
+  cursor: pointer;
+}
+
+.tab-button:active {
+  color: black;
+}
+
+.tab-button.selected {
+  border: 1px solid var(--outer-border-color);
+  background-color: var(--popover-background-color);
+  border-bottom: 1px solid white;
+}
+
+.tab-button .tab-button-content {
+  height: 16px;
 }
 
 /*==========selection list==========*/
