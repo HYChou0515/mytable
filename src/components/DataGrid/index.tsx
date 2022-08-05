@@ -1,6 +1,5 @@
-import React, { useContext, useCallback } from "react";
+import React, { useContext } from "react";
 import {
-  Column,
   Table,
   useReactTable,
   ColumnFiltersState,
@@ -23,8 +22,6 @@ import {
 } from "@tanstack/react-table";
 import { FaAngleDown, FaAngleRight } from "react-icons/fa";
 import { rankItem } from "@tanstack/match-sorter-utils";
-import { FixedSizeList, ListChildComponentProps } from "react-window";
-import PerfectScrollbar from "react-perfect-scrollbar";
 import { getTextWidth, getCanvasFont } from "../../utils/textWidth";
 import "react-perfect-scrollbar/dist/css/styles.css";
 import Filter from "./Filter";
@@ -38,7 +35,7 @@ import {
   MultipleFilterValue,
 } from "./types";
 import { TableContext } from "./context";
-import { sort } from "fast-sort";
+import VirtualList from "./VirtualList";
 // Objectives
 // [V] 1. show data in data grid
 // [V] 2. filter at column header
@@ -49,36 +46,6 @@ import { sort } from "fast-sort";
 // [ ] 7. group by distribution
 // [V] 8. pagination
 // [ ] 9. re-ranking (after filtering, click this to re-rank)
-
-const CustomScrollbars: React.FC<any> = ({
-  onScroll,
-  forwardedRef,
-  style,
-  children,
-}) => {
-  const refSetter = useCallback((scrollbarsRef: any) => {
-    if (scrollbarsRef) {
-      forwardedRef(scrollbarsRef.view);
-    } else {
-      forwardedRef(null);
-    }
-  }, []);
-
-  return (
-    <PerfectScrollbar
-      ref={refSetter}
-      style={{ ...style, overflow: "hidden" }}
-      onScroll={onScroll}
-      className={"table-body"}
-    >
-      {children}
-    </PerfectScrollbar>
-  );
-};
-
-const CustomScrollbarsVirtualList = React.forwardRef((props, ref) => (
-  <CustomScrollbars {...props} forwardedRef={ref} />
-));
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -235,26 +202,27 @@ function DivTableBody<ObjT>(
   const table = props.table;
   const rowHeight = 28;
   return (
-    <FixedSizeList<Row<ObjT>[]>
-      outerElementType={CustomScrollbarsVirtualList}
+    <VirtualList<Row<ObjT>[]>
       itemData={table.getRowModel().rows}
       itemCount={table.getRowModel().rows.length}
       itemSize={rowHeight}
-      height={Math.min(700, table.getRowModel().rows.length * rowHeight)}
+      height={Math.min(600, table.getRowModel().rows.length * rowHeight)}
       width={`calc(${table.getTotalSize()}px + 2*var(--border-width))`}
     >
-      {({ data, index, style }: ListChildComponentProps<Row<ObjT>[]>) => {
+      {({ data, index, style }) => {
         const row = data[index];
         return (
           <DivTableBodyRow<ObjT>
             key={row.id}
             style={style}
-            className={index % 2 === 0 ? "even-child" : "odd-child"}
+            className={`table-body ${
+              index % 2 === 0 ? "even-child" : "odd-child"
+            }`}
             row={row}
           />
         );
       }}
-    </FixedSizeList>
+    </VirtualList>
   );
 }
 function DivTableBodyCell<ObjT>(
