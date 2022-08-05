@@ -15,7 +15,6 @@ import {
   getGroupedRowModel,
   PaginationState,
   FilterFn,
-  ColumnDef,
   flexRender,
   Header,
   Row,
@@ -24,7 +23,7 @@ import { FaAngleDown, FaAngleRight } from "react-icons/fa";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { getTextWidth, getCanvasFont } from "../../utils/textWidth";
 import "react-perfect-scrollbar/dist/css/styles.css";
-import Filter from "./Filter";
+import Filter, { modifyColumnsFilterFn } from "./Filter";
 import {
   DataGridProps,
   DivTableBodyCellProps,
@@ -32,7 +31,6 @@ import {
   DivTableHeadCellFilterProps,
   DivTableHeaderCellProps,
   DivTableHeadProps,
-  MultipleFilterValue,
 } from "./types";
 import { TableContext } from "./context";
 import VirtualList from "./VirtualList";
@@ -275,44 +273,6 @@ function DivTableBodyCell<ObjT>(
       {cellContent}
     </div>
   );
-}
-
-const multipleFilter: FilterFn<any> = (
-  row,
-  columnId,
-  value: MultipleFilterValue,
-  addMeta
-) => {
-  if (value.activated === "numericFilter") {
-    const filterValue = value.filterValues[value.activated];
-    const [min, max] = filterValue;
-    const rowValue = row.getValue(columnId) as number;
-    if (min != null && min > rowValue) return false;
-    if (max != null && max < rowValue) return false;
-    return true;
-  }
-  if (value.activated === "selection") {
-    const filterValue = value.filterValues[value.activated];
-    let rowValue = row.getValue(columnId);
-    if (typeof rowValue === "number") {
-      rowValue = String(rowValue);
-    } else if (typeof rowValue !== "string") {
-      return false;
-    }
-    return filterValue[rowValue as string] === "selected";
-  }
-  return true;
-};
-
-function modifyColumnsFilterFn<ObjT>(column: ColumnDef<ObjT>) {
-  const childColumns = column.columns ?? [];
-  if ((childColumns ?? []).length > 0) {
-    column.columns = childColumns.map(modifyColumnsFilterFn);
-  }
-  if ((column as any).accessorKey) {
-    column.filterFn = multipleFilter;
-  }
-  return column;
 }
 
 function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {

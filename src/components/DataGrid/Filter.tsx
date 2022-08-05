@@ -1,4 +1,4 @@
-import { Column, Table } from "@tanstack/react-table";
+import { Column, ColumnDef, FilterFn, Table } from "@tanstack/react-table";
 import React, { Fragment, useState } from "react";
 import { sort } from "fast-sort";
 import { usePopper } from "react-popper";
@@ -13,6 +13,57 @@ import { rankItem } from "@tanstack/match-sorter-utils";
 
 import { MultipleFilterFunctions, MultipleFilterValue } from "./types";
 import VirtualList from "./VirtualList";
+
+export const multipleFilter: FilterFn<any> = (
+  row,
+  columnId,
+  value: MultipleFilterValue,
+  addMeta
+) => {
+  if (value.activated === "numericFilter") {
+    const filterValue = value.filterValues[value.activated];
+    const [min, max] = filterValue;
+    const rowValue = row.getValue(columnId) as number;
+    if (min != null && min > rowValue) return false;
+    if (max != null && max < rowValue) return false;
+    return true;
+  }
+  if (value.activated === "selection") {
+    const filterValue = value.filterValues[value.activated];
+    let rowValue = row.getValue(columnId);
+    if (typeof rowValue === "number") {
+      rowValue = String(rowValue);
+    } else if (typeof rowValue !== "string") {
+      return false;
+    }
+    return filterValue[rowValue as string] === "selected";
+  }
+  if (value.activated === "textContains") {
+    const filterValue = value.filterValues[value.activated];
+    let rowValue: any = row.getValue(columnId);
+    if (typeof rowValue === "number") {
+      rowValue = String(rowValue);
+    } else if (typeof rowValue !== "string") {
+      return false;
+    }
+    if (filterValue.length === 0) {
+      return true;
+    }
+    return rowValue.toUpperCase().includes(filterValue.toUpperCase());
+  }
+  return true;
+};
+
+export function modifyColumnsFilterFn<ObjT>(column: ColumnDef<ObjT>) {
+  const childColumns = column.columns ?? [];
+  if ((childColumns ?? []).length > 0) {
+    column.columns = childColumns.map(modifyColumnsFilterFn);
+  }
+  if ((column as any).accessorKey) {
+    column.filterFn = multipleFilter;
+  }
+  return column;
+}
 
 // A debounced input react component
 function DebouncedInput({
@@ -274,8 +325,7 @@ const getNumericFilterPanel = ({
         : `${minValue} ~ ${maxValue}`}
     </div>
   );
-  return [
-    title,
+  const panel = (
     <div style={{ width: "100%" }}>
       <DebouncedInput
         type="number"
@@ -311,11 +361,53 @@ const getNumericFilterPanel = ({
         }
         style={{ width: "100%" }}
       />
-    </div>,
-  ];
+    </div>
+  );
+  return [title, panel];
 };
 
-const getTextFilterPanel = ({}: {}) => {};
+const getTextFilterPanel = ({
+  column,
+  columnFilterValue,
+}: {
+  column: Column<any, unknown>;
+  columnFilterValue: MultipleFilterValue;
+}) => {
+  const textContains = columnFilterValue.filterValues.textContains;
+  const title = (
+    <div
+      className="selection-list-button"
+      style={{
+        display: "block",
+        flex: "auto",
+        flexGrow: 1,
+        textAlign: "left",
+      }}
+    >
+      {textContains.length === 0 ? "(all)" : textContains}
+    </div>
+  );
+  const panel = (
+    <div>
+      <DebouncedInput
+        type="text"
+        value={textContains}
+        onChange={(e) =>
+          column.setFilterValue({
+            ...columnFilterValue,
+            activated: "textContains",
+            filterValues: {
+              ...columnFilterValue.filterValues,
+              textContains: String(e),
+            },
+          })
+        }
+        placeholder={`search...`}
+      />
+    </div>
+  );
+  return [title, panel];
+};
 
 function Filter({
   column,
@@ -383,7 +475,7 @@ function Filter({
     column,
     columnFilterValue,
   });
-  const [textFilterTitle, textFilterPanel] = getNumericFilterPanel({
+  const [textFilterTitle, textFilterPanel] = getTextFilterPanel({
     column,
     columnFilterValue,
   });
@@ -473,83 +565,6 @@ function Filter({
         </Tab.Group>
       </Popover.Panel>
     </Popover>
-  );
-}
-
-function Filter2({
-  column,
-  table,
-}: {
-  column: Column<any, unknown>;
-  table: Table<any>;
-}) {
-  const firstValue = table
-    .getPreFilteredRowModel()
-    .flatRows[0]?.getValue(column.id);
-
-  const columnFilterValue = column.getFilterValue();
-
-  const sortedUniqueValues = React.useMemo(
-    () =>
-      typeof firstValue === "number"
-        ? []
-        : Array.from(column.getFacetedUniqueValues().keys()).sort(),
-    [column.getFacetedUniqueValues()]
-  );
-
-  return typeof firstValue === "number" ? (
-    <div>
-      <div className="flex space-x-2">
-        <DebouncedInput
-          type="number"
-          min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
-          max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
-          value={(columnFilterValue as [number, number])?.[0] ?? ""}
-          onChange={(value) =>
-            column.setFilterValue((old: [number, number]) => [value, old?.[1]])
-          }
-          placeholder={`Min ${
-            column.getFacetedMinMaxValues()?.[0]
-              ? `(${column.getFacetedMinMaxValues()?.[0]})`
-              : ""
-          }`}
-          className="w-24 border shadow rounded"
-        />
-        <DebouncedInput
-          type="number"
-          min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
-          max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
-          value={(columnFilterValue as [number, number])?.[1] ?? ""}
-          onChange={(value) =>
-            column.setFilterValue((old: [number, number]) => [old?.[0], value])
-          }
-          placeholder={`Max ${
-            column.getFacetedMinMaxValues()?.[1]
-              ? `(${column.getFacetedMinMaxValues()?.[1]})`
-              : ""
-          }`}
-          className="w-24 border shadow rounded"
-        />
-      </div>
-      <div className="h-1" />
-    </div>
-  ) : (
-    <>
-      <datalist id={column.id + "list"}>
-        {sortedUniqueValues.slice(0, 5000).map((value: any) => (
-          <option value={value} key={value} />
-        ))}
-      </datalist>
-      <DebouncedInput
-        type="text"
-        value={(columnFilterValue ?? "") as string}
-        onChange={(value) => column.setFilterValue(value)}
-        placeholder={`Search... (${column.getFacetedUniqueValues().size})`}
-        className="w-36 border shadow rounded"
-        list={column.id + "list"}
-      />
-      <div className="h-1" />
-    </>
   );
 }
 
