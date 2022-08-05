@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback } from "react";
+import React, { useContext, useCallback } from "react";
 import {
   Column,
   Table,
@@ -36,8 +36,9 @@ import {
   DivTableHeaderCellProps,
   DivTableHeadProps,
   MultipleFilterValue,
-  TableContextProps,
 } from "./types";
+import { TableContext } from "./context";
+import { sort } from "fast-sort";
 // Objectives
 // [V] 1. show data in data grid
 // [V] 2. filter at column header
@@ -78,10 +79,6 @@ const CustomScrollbars: React.FC<any> = ({
 const CustomScrollbarsVirtualList = React.forwardRef((props, ref) => (
   <CustomScrollbars {...props} forwardedRef={ref} />
 ));
-
-const TableContext = createContext<TableContextProps>({
-  onAutoSizeColumn: () => false,
-});
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -410,20 +407,14 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
       }
       columnSizing[columnKey] = textMinWidth + 8;
     };
-    const allChildColumns: string[] = [];
-    const recursiveFindColumns = (column: Column<ObjT, unknown>) => {
-      if (column.columnDef != null) {
-        const k = (column.columnDef as any).accessorKey;
+    header.column.getFlatColumns().forEach((c) => {
+      if (c.columnDef != null) {
+        const k = (c.columnDef as any).accessorKey;
         if (typeof k === "string") {
-          allChildColumns.push(k);
+          resizeColumnOfKey(k);
         }
       }
-      if (column.columns != null) {
-        column.columns.forEach(recursiveFindColumns);
-      }
-    };
-    recursiveFindColumns(header.column);
-    allChildColumns.forEach(resizeColumnOfKey);
+    });
     table.setColumnSizing(columnSizing);
   };
   return (

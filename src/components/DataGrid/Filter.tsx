@@ -318,6 +318,21 @@ function Filter({
     [table.getPreFilteredRowModel()]
   );
 
+  const defaultColumnFilterValue: MultipleFilterValue = React.useMemo(
+    () => ({
+      activated: "selection",
+      filterValues: {
+        numericBetween: [null, null],
+        selection: allValues.reduce(
+          (pre, cur) => ({ ...pre, [cur]: "selected" }),
+          {}
+        ),
+        textContains: "",
+      },
+    }),
+    [allValues]
+  );
+
   const sortedUniqueValues = React.useMemo(
     () =>
       sort(
@@ -331,17 +346,7 @@ function Filter({
   );
   let columnFilterValue = column.getFilterValue() as MultipleFilterValue;
   if (columnFilterValue == null) {
-    columnFilterValue = {
-      activated: "selection",
-      filterValues: {
-        numericBetween: [null, null],
-        selection: allValues.reduce(
-          (pre, cur) => ({ ...pre, [cur]: "selected" }),
-          {}
-        ),
-        textContains: "",
-      },
-    } as MultipleFilterValue;
+    columnFilterValue = defaultColumnFilterValue;
   }
 
   const [selectionTitle, selectionPanel] = getSelectionPanel({
