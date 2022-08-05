@@ -253,6 +253,8 @@ const getNumericFilterPanel = ({
   columnFilterValue: MultipleFilterValue;
 }) => {
   const [minValue, maxValue] = columnFilterValue.filterValues.numericFilter;
+  const facetMin = Number(column.getFacetedMinMaxValues()?.[0] ?? "");
+  const facetMax = Number(column.getFacetedMinMaxValues()?.[1] ?? "");
   const title = (
     <div
       className="selection-list-button"
@@ -277,8 +279,8 @@ const getNumericFilterPanel = ({
     <div style={{ width: "100%" }}>
       <DebouncedInput
         type="number"
-        min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
-        max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
+        min={facetMin}
+        max={facetMax}
         value={minValue ?? ""}
         onChange={(e) =>
           column.setFilterValue({
@@ -294,8 +296,8 @@ const getNumericFilterPanel = ({
       />
       <DebouncedInput
         type="number"
-        min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
-        max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
+        min={facetMin}
+        max={facetMax}
         value={maxValue ?? ""}
         onChange={(e) =>
           column.setFilterValue({
@@ -312,6 +314,8 @@ const getNumericFilterPanel = ({
     </div>,
   ];
 };
+
+const getTextFilterPanel = ({}: {}) => {};
 
 function Filter({
   column,
@@ -379,6 +383,10 @@ function Filter({
     column,
     columnFilterValue,
   });
+  const [textFilterTitle, textFilterPanel] = getNumericFilterPanel({
+    column,
+    columnFilterValue,
+  });
 
   const tabs: (keyof MultipleFilterFunctions)[] = [
     "selection",
@@ -401,7 +409,7 @@ function Filter({
   const ButtonTitle = {
     selection: selectionTitle,
     numericFilter: numericFilterTitle,
-    textContains: "text",
+    textContains: textFilterTitle,
   }[columnFilterValue.activated];
 
   const [referenceElement, setReferenceElement] = useState<Element | null>(
@@ -460,7 +468,7 @@ function Filter({
           <Tab.Panels>
             <Tab.Panel>{selectionPanel}</Tab.Panel>
             <Tab.Panel>{numericFilterPanel}</Tab.Panel>
-            <Tab.Panel></Tab.Panel>
+            <Tab.Panel>{textFilterPanel}</Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
       </Popover.Panel>
