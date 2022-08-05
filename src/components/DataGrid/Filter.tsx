@@ -48,20 +48,20 @@ function DebouncedInput({
   );
 }
 
-const SelectionPanel: React.FC<{
-  column: Column<any, unknown>;
-  allValues: string[];
-  columnFilterValue: MultipleFilterValue;
-  sortedUniqueValues: string[];
-  selected: string[];
-  checkedState: "empty" | "full" | "intermediate";
-}> = ({
+const SelectionPanel = ({
   column,
   allValues,
   columnFilterValue,
   sortedUniqueValues,
   selected,
   checkedState,
+}: {
+  column: Column<any, unknown>;
+  allValues: string[];
+  columnFilterValue: MultipleFilterValue;
+  sortedUniqueValues: string[];
+  selected: string[];
+  checkedState: "empty" | "full" | "intermediate";
 }) => {
   const rowHeight = 24;
   const shownAndSelected = sortedUniqueValues.filter((s) =>

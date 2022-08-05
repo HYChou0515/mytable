@@ -16,7 +16,7 @@ type PopoverHoverProps = {
   initOpen?: boolean;
 };
 
-const PopoverHover: React.FC<PopoverHoverProps> = (props, children) => {
+const PopoverHover = (props: PopoverHoverProps) => {
   const [hoverOpen, setHoverOpen] = React.useState(false);
   const [clickOpen, setClickOpen] = React.useState(props.initOpen ?? false);
 
@@ -71,7 +71,7 @@ const PlotPopoverHoverContext = createContext<RowStates>({
 type PlotPopoverHoverProps = {
   rowId: string;
 };
-const PlotPopoverHover: React.FC<PlotPopoverHoverProps> = (props) => {
+const PlotPopoverHover = (props: PlotPopoverHoverProps) => {
   const { states, setState, plots } = useContext(PlotPopoverHoverContext) ?? {
     state: {},
     setState: () => false,
@@ -180,7 +180,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
 
 const DataContext = createContext(makeData(2000));
 
-const DataReport: React.FC = () => {
+const DataReport = () => {
   const data = useContext(DataContext);
   const [plots] = useState(
     data.reduce(

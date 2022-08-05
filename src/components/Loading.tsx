@@ -2,7 +2,7 @@ import React from "react";
 
 // source: https://loading.io/css/
 
-export const Spinner: React.FC = () => (
+export const Spinner = () => (
   <div className="lds-spinner">
     <div></div>
     <div></div>
@@ -19,7 +19,7 @@ export const Spinner: React.FC = () => (
   </div>
 );
 
-export const Facebook: React.FC = () => (
+export const Facebook = () => (
   <div className="lds-facebook">
     <div></div>
     <div></div>
@@ -27,7 +27,7 @@ export const Facebook: React.FC = () => (
   </div>
 );
 
-export const Ring: React.FC = () => (
+export const Ring = () => (
   <div className="lds-ring">
     <div></div>
     <div></div>
