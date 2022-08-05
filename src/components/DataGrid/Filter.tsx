@@ -12,6 +12,7 @@ import {
 import { rankItem } from "@tanstack/match-sorter-utils";
 
 import { MultipleFilterValue } from "./types";
+import VirtualList from "./VirtualList";
 
 // A debounced input react component
 function DebouncedInput({
@@ -62,10 +63,15 @@ const SelectionPanel: React.FC<{
   selected,
   checkedState,
 }) => {
+  const rowHeight = 24;
   const shownAndSelected = sortedUniqueValues.filter((s) =>
     selected.includes(s)
   );
   const [optionFilterValue, setOptionalFilterValue] = useState("");
+  const optionsFiltered = sortedUniqueValues.filter(
+    (v) => rankItem(v, optionFilterValue).passed
+  );
+
   return (
     <Listbox
       multiple
@@ -97,73 +103,87 @@ const SelectionPanel: React.FC<{
         onChange={(value) => setOptionalFilterValue(String(value))}
       />
       <Listbox.Options static className="selection-list">
-        <li
-          key={`selection-list-item`}
-          className={`selection-list-item ${
-            checkedState === "full" && "selected"
-          }`}
-          onClick={() => {
-            if (checkedState === "full") {
-              column.setFilterValue({
-                ...columnFilterValue,
-                activated: "selection",
-                filterValues: {
-                  ...columnFilterValue.filterValues,
-                  selection: {
-                    ...columnFilterValue.filterValues.selection,
-                    ...sortedUniqueValues.reduce(
-                      (pre, cur) => ({ ...pre, [cur]: "unselected" }),
-                      {}
-                    ),
-                  },
-                },
-              } as MultipleFilterValue);
-            } else {
-              column.setFilterValue({
-                ...columnFilterValue,
-                activated: "selection",
-                filterValues: {
-                  ...columnFilterValue.filterValues,
-                  selection: {
-                    ...columnFilterValue.filterValues.selection,
-                    ...allValues.reduce(
-                      (pre, cur) => ({ ...pre, [cur]: "selected" }),
-                      {}
-                    ),
-                  },
-                },
-              } as MultipleFilterValue);
-            }
-          }}
+        <VirtualList<string[]>
+          itemData={optionsFiltered}
+          itemCount={optionsFiltered.length + 1}
+          itemSize={rowHeight}
+          height={rowHeight * 7}
+          width={"100%"}
         >
-          {checkedState === "empty" ? (
-            <BiCheckbox className={"selection-item-icon"} />
-          ) : checkedState === "full" ? (
-            <BiCheckboxChecked className={"selection-item-icon"} />
-          ) : (
-            <BiCheckboxSquare className={"selection-item-icon"} />
-          )}
-          <span>(Select All)</span>
-        </li>
-        {sortedUniqueValues
-          .filter((v) => rankItem(v, optionFilterValue).passed)
-          .map((v, i) => (
-            <Listbox.Option key={v} value={v} as={Fragment}>
-              {({ active, selected }) => (
+          {({ data, index, style }) => {
+            if (index === 0) {
+              return (
                 <li
-                  key={`selection-list-item-${i}-${v}`}
-                  className={`selection-list-item ${selected && "selected"}`}
+                  key={`selection-list-item`}
+                  className={`selection-list-item ${
+                    checkedState === "full" && "selected"
+                  }`}
+                  onClick={() => {
+                    if (checkedState === "full") {
+                      column.setFilterValue({
+                        ...columnFilterValue,
+                        activated: "selection",
+                        filterValues: {
+                          ...columnFilterValue.filterValues,
+                          selection: {
+                            ...columnFilterValue.filterValues.selection,
+                            ...sortedUniqueValues.reduce(
+                              (pre, cur) => ({ ...pre, [cur]: "unselected" }),
+                              {}
+                            ),
+                          },
+                        },
+                      } as MultipleFilterValue);
+                    } else {
+                      column.setFilterValue({
+                        ...columnFilterValue,
+                        activated: "selection",
+                        filterValues: {
+                          ...columnFilterValue.filterValues,
+                          selection: {
+                            ...columnFilterValue.filterValues.selection,
+                            ...allValues.reduce(
+                              (pre, cur) => ({ ...pre, [cur]: "selected" }),
+                              {}
+                            ),
+                          },
+                        },
+                      } as MultipleFilterValue);
+                    }
+                  }}
                 >
-                  {selected ? (
+                  {checkedState === "empty" ? (
+                    <BiCheckbox className={"selection-item-icon"} />
+                  ) : checkedState === "full" ? (
                     <BiCheckboxChecked className={"selection-item-icon"} />
                   ) : (
-                    <BiCheckbox className={"selection-item-icon"} />
+                    <BiCheckboxSquare className={"selection-item-icon"} />
                   )}
-                  <span>{v}</span>
+                  <span>(Select All)</span>
                 </li>
-              )}
-            </Listbox.Option>
-          ))}
+              );
+            }
+            const v = data[index - 1];
+            return (
+              <Listbox.Option key={v} value={v} as={Fragment}>
+                {({ active, selected }) => (
+                  <li
+                    key={`selection-list-item-${index}-${v}`}
+                    className={`selection-list-item ${selected && "selected"}`}
+                    style={style}
+                  >
+                    {selected ? (
+                      <BiCheckboxChecked className={"selection-item-icon"} />
+                    ) : (
+                      <BiCheckbox className={"selection-item-icon"} />
+                    )}
+                    <span>{v}</span>
+                  </li>
+                )}
+              </Listbox.Option>
+            );
+          }}
+        </VirtualList>
       </Listbox.Options>
     </Listbox>
   );
