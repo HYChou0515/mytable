@@ -152,119 +152,124 @@ const SelectionPanel = ({
   );
 
   return (
-    <Listbox
-      multiple
-      value={shownAndSelected}
-      onChange={(s) => {
-        column.setFilterValue({
-          ...columnFilterValue,
-          activated: "selection",
-          filterValues: {
-            ...columnFilterValue.filterValues,
-            selection: {
-              ...columnFilterValue.filterValues.selection,
-              ...sortedUniqueValues.reduce(
-                (pre, cur) => ({
-                  ...pre,
-                  [cur]: s.includes(cur) ? "selected" : "unselected",
-                }),
-                {}
-              ),
+    <div className={"tab-panel"}>
+      <Listbox
+        multiple
+        value={shownAndSelected}
+        onChange={(s) => {
+          column.setFilterValue({
+            ...columnFilterValue,
+            activated: "selection",
+            filterValues: {
+              ...columnFilterValue.filterValues,
+              selection: {
+                ...columnFilterValue.filterValues.selection,
+                ...sortedUniqueValues.reduce(
+                  (pre, cur) => ({
+                    ...pre,
+                    [cur]: s.includes(cur) ? "selected" : "unselected",
+                  }),
+                  {}
+                ),
+              },
             },
-          },
-        } as MultipleFilterValue);
-      }}
-    >
-      <DebouncedInput
-        value={optionFilterValue}
-        type={"text"}
-        placeholder={"search..."}
-        onChange={(value) => setOptionalFilterValue(String(value))}
-      />
-      <Listbox.Options static className="selection-list">
-        <VirtualList<string[]>
-          itemData={optionsFiltered}
-          itemCount={optionsFiltered.length + 1}
-          itemSize={rowHeight}
-          height={rowHeight * 7}
-          width={"100%"}
-        >
-          {({ data, index, style }) => {
-            if (index === 0) {
-              return (
-                <li
-                  key={`selection-list-item`}
-                  className={`selection-list-item ${
-                    checkedState === "full" && "selected"
-                  }`}
-                  onClick={() => {
-                    if (checkedState === "full") {
-                      column.setFilterValue({
-                        ...columnFilterValue,
-                        activated: "selection",
-                        filterValues: {
-                          ...columnFilterValue.filterValues,
-                          selection: {
-                            ...columnFilterValue.filterValues.selection,
-                            ...sortedUniqueValues.reduce(
-                              (pre, cur) => ({ ...pre, [cur]: "unselected" }),
-                              {}
-                            ),
-                          },
-                        },
-                      } as MultipleFilterValue);
-                    } else {
-                      column.setFilterValue({
-                        ...columnFilterValue,
-                        activated: "selection",
-                        filterValues: {
-                          ...columnFilterValue.filterValues,
-                          selection: {
-                            ...columnFilterValue.filterValues.selection,
-                            ...allValues.reduce(
-                              (pre, cur) => ({ ...pre, [cur]: "selected" }),
-                              {}
-                            ),
-                          },
-                        },
-                      } as MultipleFilterValue);
-                    }
-                  }}
-                >
-                  {checkedState === "empty" ? (
-                    <BiCheckbox className={"list-checked-icon"} />
-                  ) : checkedState === "full" ? (
-                    <BiCheckboxChecked className={"list-checked-icon"} />
-                  ) : (
-                    <BiCheckboxSquare className={"list-checked-icon"} />
-                  )}
-                  <span>(Select All)</span>
-                </li>
-              );
-            }
-            const v = data[index - 1];
-            return (
-              <Listbox.Option key={v} value={v} as={Fragment}>
-                {({ active, selected }) => (
+          } as MultipleFilterValue);
+        }}
+      >
+        <DebouncedInput
+          value={optionFilterValue}
+          type={"text"}
+          placeholder={"search..."}
+          className={"tab-panel-input-field"}
+          onChange={(value) => setOptionalFilterValue(String(value))}
+        />
+        <Listbox.Options static className="selection-list">
+          <VirtualList<string[]>
+            itemData={optionsFiltered}
+            itemCount={optionsFiltered.length + 1}
+            itemSize={rowHeight}
+            height={rowHeight * 7}
+            width={"100%"}
+          >
+            {({ data, index, style }) => {
+              if (index === 0) {
+                return (
                   <li
-                    key={`selection-list-item-${index}-${v}`}
-                    className={`selection-list-item ${selected && "selected"}`}
-                    style={style}
+                    key={`selection-list-item`}
+                    className={`selection-list-item ${
+                      checkedState === "full" && "selected"
+                    }`}
+                    onClick={() => {
+                      if (checkedState === "full") {
+                        column.setFilterValue({
+                          ...columnFilterValue,
+                          activated: "selection",
+                          filterValues: {
+                            ...columnFilterValue.filterValues,
+                            selection: {
+                              ...columnFilterValue.filterValues.selection,
+                              ...sortedUniqueValues.reduce(
+                                (pre, cur) => ({ ...pre, [cur]: "unselected" }),
+                                {}
+                              ),
+                            },
+                          },
+                        } as MultipleFilterValue);
+                      } else {
+                        column.setFilterValue({
+                          ...columnFilterValue,
+                          activated: "selection",
+                          filterValues: {
+                            ...columnFilterValue.filterValues,
+                            selection: {
+                              ...columnFilterValue.filterValues.selection,
+                              ...allValues.reduce(
+                                (pre, cur) => ({ ...pre, [cur]: "selected" }),
+                                {}
+                              ),
+                            },
+                          },
+                        } as MultipleFilterValue);
+                      }
+                    }}
                   >
-                    {selected ? (
+                    {checkedState === "empty" ? (
+                      <BiCheckbox className={"list-checked-icon"} />
+                    ) : checkedState === "full" ? (
                       <BiCheckboxChecked className={"list-checked-icon"} />
                     ) : (
-                      <BiCheckbox className={"list-checked-icon"} />
+                      <BiCheckboxSquare className={"list-checked-icon"} />
                     )}
-                    <span>{v}</span>
+                    <span>(Select All)</span>
                   </li>
-                )}
-              </Listbox.Option>
-            );
-          }}
-        </VirtualList>
-      </Listbox.Options>
-    </Listbox>
+                );
+              }
+              const v = data[index - 1];
+              return (
+                <Listbox.Option key={v} value={v} as={Fragment}>
+                  {({ active, selected }) => (
+                    <li
+                      key={`selection-list-item-${index}-${v}`}
+                      className={`selection-list-item ${
+                        selected && "selected"
+                      }`}
+                      style={style}
+                    >
+                      {selected ? (
+                        <BiCheckboxChecked className={"list-checked-icon"} />
+                      ) : (
+                        <BiCheckbox className={"list-checked-icon"} />
+                      )}
+                      <span>{v}</span>
+                    </li>
+                  )}
+                </Listbox.Option>
+              );
+            }}
+          </VirtualList>
+        </Listbox.Options>
+      </Listbox>
+    </div>
   );
 };
 
@@ -352,9 +357,10 @@ const getNumericFilterPanel = ({
     </div>
   );
   const panel = (
-    <div style={{ width: "100%" }}>
+    <div className={"tab-panel"}>
       <DebouncedInput
         type="number"
+        className={"tab-panel-input-field"}
         min={facetMin}
         max={facetMax}
         value={minValue ?? ""}
@@ -369,10 +375,10 @@ const getNumericFilterPanel = ({
             },
           } as MultipleFilterValue)
         }
-        style={{ width: "100%" }}
       />
       <DebouncedInput
         type="number"
+        className={"tab-panel-input-field"}
         min={facetMin}
         max={facetMax}
         value={maxValue ?? ""}
@@ -387,7 +393,6 @@ const getNumericFilterPanel = ({
             },
           })
         }
-        style={{ width: "100%" }}
       />
     </div>
   );
@@ -430,9 +435,10 @@ const TextualFilterPanel = ({
     } as MultipleFilterValue);
   };
   return (
-    <div>
+    <div className={"tab-panel"}>
       <DebouncedInput
         type="text"
+        className={"tab-panel-input-field"}
         value={search}
         onChange={(e) =>
           column.setFilterValue({
@@ -567,7 +573,7 @@ function Filter({
           {}
         ),
         textualFilter: {
-          matchMode: "wildcard",
+          matchMode: "normal",
           search: "",
           matchCase: false,
         },
@@ -662,7 +668,7 @@ function Filter({
       <Popover.Panel
         {...attributes.popper}
         ref={setPopperElement}
-        style={{ ...styles.popper, width: 200 }}
+        style={{ ...styles.popper }}
         className={"popover-panel"}
       >
         <div

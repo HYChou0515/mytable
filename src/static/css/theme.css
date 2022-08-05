@@ -99,17 +99,17 @@
 * {
   --popover-border-color: var(--outer-border-color);
   --popover-background-color: #ffffff;
+  --popover-panel-width: 200px;
 }
 
 .popover-panel {
   z-index: 3000;
   border-radius: 3px;
   padding: 0;
-  /*padding-left: 5px;*/
-  /*padding-right: 5px;*/
   border: 1px var(--popover-border-color) solid;
   background-color: var(--popover-background-color);
   box-shadow: 5px 5px 5px;
+  width: var(--popover-panel-width);
 }
 
 .tabs-header {
@@ -137,6 +137,20 @@
 
 .tab-button .tab-button-content {
   height: 16px;
+}
+.tab-panel-input-field {
+  width: calc(var(--popover-panel-width) - 18px);
+  border: 1px solid #98a4a6;
+  padding: 1px 1px 1px 4px;
+  line-height: 18px;
+  margin-bottom: 6px;
+}
+.tab-panel-input-field:focus {
+  box-shadow: 0 0 5px #719ece;
+}
+
+.tab-panel {
+  margin: 8px 4px 4px;
 }
 
 /*==========selection list==========*/
@@ -199,6 +213,7 @@ li.selection-list-item.selected {
   border: 0 solid #e5e7eb;
   color: rgb(17 24 39);
   font-size: 12px;
+  padding: 0;
 }
 .textual-filter-option:hover {
   color: rgb(17 24 39);

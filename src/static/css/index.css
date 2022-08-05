@@ -134,6 +134,7 @@ button.myui-clicked {
   gap: 3px; /*compensate left border*/
   border: none;
   background: none;
+  cursor: pointer;
 }
 
 .popover-arrow,
