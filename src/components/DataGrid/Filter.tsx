@@ -2,17 +2,24 @@ import { Column, ColumnDef, FilterFn, Table } from "@tanstack/react-table";
 import React, { Fragment, useState } from "react";
 import { sort } from "fast-sort";
 import { usePopper } from "react-popper";
-import { Listbox, Popover, Tab } from "@headlessui/react";
+import { Listbox, Popover, Tab, RadioGroup } from "@headlessui/react";
 import { HiOutlineFilter } from "react-icons/hi";
 import {
   BiCheckbox,
   BiCheckboxChecked,
   BiCheckboxSquare,
+  BiRadioCircle,
+  BiRadioCircleMarked,
 } from "react-icons/bi";
 import { rankItem } from "@tanstack/match-sorter-utils";
 
-import { MultipleFilterFunctions, MultipleFilterValue } from "./types";
+import {
+  MultipleFilterFunctions,
+  MultipleFilterValue,
+  TextualFilterMatchModes,
+} from "./types";
 import VirtualList from "./VirtualList";
+import escapeStringRegexp from "escape-string-regexp";
 
 export const multipleFilter: FilterFn<any> = (
   row,
@@ -38,18 +45,39 @@ export const multipleFilter: FilterFn<any> = (
     }
     return filterValue[rowValue as string] === "selected";
   }
-  if (value.activated === "textContains") {
-    const filterValue = value.filterValues[value.activated];
+  if (value.activated === "textualFilter") {
+    const {
+      search: _search,
+      matchMode,
+      matchCase,
+    } = value.filterValues[value.activated];
     let rowValue: any = row.getValue(columnId);
     if (typeof rowValue === "number") {
       rowValue = String(rowValue);
     } else if (typeof rowValue !== "string") {
       return false;
     }
-    if (filterValue.length === 0) {
+    if (_search.length === 0) {
       return true;
     }
-    return rowValue.toUpperCase().includes(filterValue.toUpperCase());
+    let text = rowValue;
+    let search = _search;
+    if (!matchCase) {
+      text = text.toUpperCase();
+      search = search.toUpperCase();
+    }
+    if (matchMode === "normal") {
+      return text.includes(search);
+    }
+    if (matchMode === "wildcard") {
+      search = escapeStringRegexp(search);
+      return new RegExp(
+        search.replace(/\\\*/g, ".*").replace(/\\\?/g, ".")
+      ).test(text);
+    }
+    if (matchMode === "regex") {
+      return new RegExp(search).test(text);
+    }
   }
   return true;
 };
@@ -204,11 +232,11 @@ const SelectionPanel = ({
                   }}
                 >
                   {checkedState === "empty" ? (
-                    <BiCheckbox className={"selection-item-icon"} />
+                    <BiCheckbox className={"list-checked-icon"} />
                   ) : checkedState === "full" ? (
-                    <BiCheckboxChecked className={"selection-item-icon"} />
+                    <BiCheckboxChecked className={"list-checked-icon"} />
                   ) : (
-                    <BiCheckboxSquare className={"selection-item-icon"} />
+                    <BiCheckboxSquare className={"list-checked-icon"} />
                   )}
                   <span>(Select All)</span>
                 </li>
@@ -224,9 +252,9 @@ const SelectionPanel = ({
                     style={style}
                   >
                     {selected ? (
-                      <BiCheckboxChecked className={"selection-item-icon"} />
+                      <BiCheckboxChecked className={"list-checked-icon"} />
                     ) : (
-                      <BiCheckbox className={"selection-item-icon"} />
+                      <BiCheckbox className={"list-checked-icon"} />
                     )}
                     <span>{v}</span>
                   </li>
@@ -366,14 +394,122 @@ const getNumericFilterPanel = ({
   return [title, panel];
 };
 
-const getTextFilterPanel = ({
+const TextualFilterPanel = ({
   column,
   columnFilterValue,
 }: {
   column: Column<any, unknown>;
   columnFilterValue: MultipleFilterValue;
 }) => {
-  const textContains = columnFilterValue.filterValues.textContains;
+  const textualFilter = columnFilterValue.filterValues.textualFilter;
+  const { search, matchMode, matchCase } = textualFilter;
+  const setMatchMode = (s: TextualFilterMatchModes) => {
+    column.setFilterValue({
+      ...columnFilterValue,
+      activated: "textualFilter",
+      filterValues: {
+        ...columnFilterValue.filterValues,
+        textualFilter: {
+          ...columnFilterValue.filterValues.textualFilter,
+          matchMode: s,
+        },
+      },
+    } as MultipleFilterValue);
+  };
+  const toggleMatchCase = () => {
+    column.setFilterValue({
+      ...columnFilterValue,
+      activated: "textualFilter",
+      filterValues: {
+        ...columnFilterValue.filterValues,
+        textualFilter: {
+          ...columnFilterValue.filterValues.textualFilter,
+          matchCase: !matchCase,
+        },
+      },
+    } as MultipleFilterValue);
+  };
+  return (
+    <div>
+      <DebouncedInput
+        type="text"
+        value={search}
+        onChange={(e) =>
+          column.setFilterValue({
+            ...columnFilterValue,
+            activated: "textualFilter",
+            filterValues: {
+              ...columnFilterValue.filterValues,
+              textualFilter: {
+                ...textualFilter,
+                search: String(e),
+              },
+            },
+          })
+        }
+        placeholder={`search...`}
+      />
+      <div className="textual-filter-option" onClick={toggleMatchCase}>
+        {matchCase ? (
+          <BiCheckboxChecked className={"list-checked-icon"} />
+        ) : (
+          <BiCheckbox className={"list-checked-icon"} />
+        )}
+        <span className={`${matchCase && "selected"}`}>Match Case</span>
+      </div>
+      <RadioGroup value={matchMode} onChange={setMatchMode}>
+        <RadioGroup.Label className={"textual-filter-option-title"}>
+          Search Mode
+        </RadioGroup.Label>
+        <RadioGroup.Option value="normal" className="textual-filter-option">
+          {({ checked }) => (
+            <>
+              {checked ? (
+                <BiRadioCircleMarked className={"list-checked-icon"} />
+              ) : (
+                <BiRadioCircle className={"list-checked-icon"} />
+              )}
+              <span className={`${checked && "selected"}`}>normal</span>
+            </>
+          )}
+        </RadioGroup.Option>
+        <RadioGroup.Option value="wildcard" className="textual-filter-option">
+          {({ checked }) => (
+            <>
+              {checked ? (
+                <BiRadioCircleMarked className={"list-checked-icon"} />
+              ) : (
+                <BiRadioCircle className={"list-checked-icon"} />
+              )}
+              <span className={`${checked && "selected"}`}>wildcard</span>
+            </>
+          )}
+        </RadioGroup.Option>
+        <RadioGroup.Option value="regex" className="textual-filter-option">
+          {({ checked }) => (
+            <>
+              {checked ? (
+                <BiRadioCircleMarked className={"list-checked-icon"} />
+              ) : (
+                <BiRadioCircle className={"list-checked-icon"} />
+              )}
+              <span className={`${checked && "selected"}`}>regex</span>
+            </>
+          )}
+        </RadioGroup.Option>
+      </RadioGroup>
+    </div>
+  );
+};
+
+const getTextualFilterPanel = ({
+  column,
+  columnFilterValue,
+}: {
+  column: Column<any, unknown>;
+  columnFilterValue: MultipleFilterValue;
+}) => {
+  const search = columnFilterValue.filterValues.textualFilter.search;
   const title = (
     <div
       className="selection-list-button"
@@ -384,29 +520,17 @@ const getTextFilterPanel = ({
         textAlign: "left",
       }}
     >
-      {textContains.length === 0 ? "(all)" : textContains}
+      {(search ?? "").length === 0 ? "(all)" : search}
     </div>
   );
-  const panel = (
-    <div>
-      <DebouncedInput
-        type="text"
-        value={textContains}
-        onChange={(e) =>
-          column.setFilterValue({
-            ...columnFilterValue,
-            activated: "textContains",
-            filterValues: {
-              ...columnFilterValue.filterValues,
-              textContains: String(e),
-            },
-          })
-        }
-        placeholder={`search...`}
-      />
-    </div>
-  );
-  return [title, panel];
+
+  return [
+    title,
+    <TextualFilterPanel
+      column={column}
+      columnFilterValue={columnFilterValue}
+    />,
+  ];
 };
 
 function Filter({
@@ -442,7 +566,11 @@ function Filter({
           (pre, cur) => ({ ...pre, [cur]: "selected" }),
           {}
         ),
-        textContains: "",
+        textualFilter: {
+          matchMode: "wildcard",
+          search: "",
+          matchCase: false,
+        },
       },
     }),
     [allValues]
@@ -475,7 +603,7 @@ function Filter({
     column,
     columnFilterValue,
   });
-  const [textFilterTitle, textFilterPanel] = getTextFilterPanel({
+  const [textualFilterTitle, textualFilterPanel] = getTextualFilterPanel({
     column,
     columnFilterValue,
   });
@@ -483,7 +611,7 @@ function Filter({
   const tabs: (keyof MultipleFilterFunctions)[] = [
     "selection",
     "numericFilter",
-    "textContains",
+    "textualFilter",
   ];
   const tabIndex = tabs
     .map(
@@ -501,7 +629,7 @@ function Filter({
   const ButtonTitle = {
     selection: selectionTitle,
     numericFilter: numericFilterTitle,
-    textContains: textFilterTitle,
+    textualFilter: textualFilterTitle,
   }[columnFilterValue.activated];
 
   const [referenceElement, setReferenceElement] = useState<Element | null>(
@@ -560,7 +688,7 @@ function Filter({
           <Tab.Panels>
             <Tab.Panel>{selectionPanel}</Tab.Panel>
             <Tab.Panel>{numericFilterPanel}</Tab.Panel>
-            <Tab.Panel>{textFilterPanel}</Tab.Panel>
+            <Tab.Panel>{textualFilterPanel}</Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
       </Popover.Panel>

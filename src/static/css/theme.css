@@ -147,6 +147,7 @@ li.selection-list-item {
   border: 0 solid #e5e7eb;
   color: rgb(17 24 39);
   font-size: 12px;
+  font-weight: normal;
 }
 li.selection-list-item:hover {
   color: rgb(17 24 39);
@@ -155,7 +156,23 @@ li.selection-list-item:hover {
 li.selection-list-item.selected {
   font-weight: bold;
 }
-.selection-item-icon {
+.list-checked-icon {
   width: var(--selection-list-item-height);
   height: var(--selection-list-item-height);
+}
+
+/*==========textual filter==========*/
+.textual-filter-option .selected {
+  /*selected textual filter option*/
+}
+.textual-filter-option-title,
+.textual-filter-option {
+  line-height: var(--selection-list-item-height);
+  border: 0 solid #e5e7eb;
+  color: rgb(17 24 39);
+  font-size: 12px;
+}
+.textual-filter-option:hover {
+  color: rgb(17 24 39);
+  background-color: #f0f0f0;
 }

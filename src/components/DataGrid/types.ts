@@ -10,10 +10,19 @@ export type DataGridProps<ObjT> = {
   pageOptions?: number[] | "one-page";
 };
 
+export type TextualFilterMatchModes = keyof {
+  normal: string;
+  wildcard: string;
+  regex: string;
+};
 export type MultipleFilterFunctions = {
   numericFilter: [number | null, number | null];
   selection: { [value: string]: "selected" | "unselected" };
-  textContains: string;
+  textualFilter: {
+    matchMode: TextualFilterMatchModes;
+    matchCase: boolean;
+    search: string;
+  };
 };
 
 export type MultipleFilterValue = {
