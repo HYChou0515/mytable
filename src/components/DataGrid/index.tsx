@@ -18,6 +18,7 @@ import {
   flexRender,
   Header,
   Row,
+  Column,
 } from "@tanstack/react-table";
 import * as _ from "lodash";
 import { FaAngleDown, FaAngleRight } from "react-icons/fa";
@@ -246,8 +247,10 @@ function DivTableBodyCell<ObjT>(
             <FaAngleRight className={"body-icon-button"} />
           )}
         </button>
-        {flexRender(cell.column.columnDef.cell, cell.getContext())}(
-        {cell.row.subRows.length})
+        <span>
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}(
+          {cell.row.subRows.length})
+        </span>
       </>
     );
   } else if (cell.getIsAggregated()) {
@@ -297,10 +300,8 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
   if (props.indexing != null) {
     columns.unshift({
       accessorFn: (_, i) => internalIndex[i] ?? null,
-      header: props.indexing.header,
+      ...props.indexing,
       filterFn: multipleFilter,
-      aggregationFn: props.indexing.aggregationFn,
-      aggregatedCell: props.indexing.aggregatedCell,
     });
   }
   const table = useReactTable<ObjT>({
@@ -334,10 +335,9 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
 
   const onAutoSizeColumn = (header: Header<ObjT, unknown>) => {
     const columnSizing = table.getState().columnSizing;
-    const resizeColumnOfKey = (columnKey: string) => {
-      const textMinWidth: number = data
-        .map((x: any) => {
-          const v = x[columnKey];
+    const resizeColumn = (c: Column<ObjT, unknown>) => {
+      const textMinWidth: number = Array.from(c.getFacetedUniqueValues().keys())
+        .map((v: any) => {
           if (v != null) {
             return getTextWidth(String(v), getCanvasFont());
           } else {
@@ -348,16 +348,12 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
       if (textMinWidth === 0) {
         return;
       }
-      columnSizing[columnKey] = textMinWidth + 8;
-    };
-    header.column.getFlatColumns().forEach((c) => {
-      if (c.columnDef != null) {
-        const k = (c.columnDef as any).accessorKey;
-        if (typeof k === "string") {
-          resizeColumnOfKey(k);
-        }
+      columnSizing[c.id] = textMinWidth + 8;
+      if (c.getIsGrouped()) {
+        columnSizing[c.id] += 60;
       }
-    });
+    };
+    header.column.getFlatColumns().forEach(resizeColumn);
     table.setColumnSizing(columnSizing);
   };
 

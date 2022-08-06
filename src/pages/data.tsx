@@ -215,6 +215,8 @@ const DataReport = () => {
             header: "Rank",
             aggregationFn: "min",
             aggregatedCell: (props) => <span>best: {props.renderValue()}</span>,
+            minSize: 75,
+            size: 100,
           }}
         />
       </div>
