@@ -19,9 +19,11 @@ import {
   Header,
   Row,
   Column,
+  SortingState,
 } from "@tanstack/react-table";
 import * as _ from "lodash";
 import { FaAngleDown, FaAngleRight } from "react-icons/fa";
+import { BsArrowDown, BsArrowUp } from "react-icons/bs";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { getTextWidth, getCanvasFont } from "../../utils/textWidth";
 import "react-perfect-scrollbar/dist/css/styles.css";
@@ -37,6 +39,7 @@ import {
 import { TableContext } from "./context";
 import VirtualList from "./VirtualList";
 import rankings from "../../utils/rankings";
+import { BuiltInSortingFn, sortingFns } from "@tanstack/table-core";
 // Objectives
 // [V] 1. show data in data grid
 // [V] 2. filter at column header
@@ -159,9 +162,36 @@ function DivTableHeadCell<ObjT>(
         width: header.getSize(),
       }}
     >
-      {header.isPlaceholder
-        ? null
-        : flexRender(header.column.columnDef.header, header.getContext())}
+      {header.isPlaceholder ? null : (
+        <div
+          style={{
+            display: "flex",
+            cursor: header.column.getCanSort() ? "pointer" : undefined,
+          }}
+          onClick={header.column.getToggleSortingHandler()}
+        >
+          <div
+            style={{
+              flexGrow: 0,
+            }}
+          >
+            {flexRender(header.column.columnDef.header, header.getContext())}
+          </div>
+          {header.column.getIsSorted() === "asc" ? (
+            <button className={"icon-button"}>
+              <BsArrowUp />
+              {header.getContext().table.getState().sorting.length > 1 &&
+                header.column.getSortIndex() + 1}
+            </button>
+          ) : header.column.getIsSorted() === "desc" ? (
+            <button className={"icon-button"}>
+              <BsArrowDown />
+              {header.getContext().table.getState().sorting.length > 1 &&
+                header.column.getSortIndex() + 1}
+            </button>
+          ) : null}
+        </div>
+      )}
       {header.column.getCanGroup() ? (
         <button
           onClick={header.column.getToggleGroupingHandler()}
@@ -290,6 +320,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
 
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [grouping, setGrouping] = React.useState<GroupingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: pageOptions === "one-page" ? data.length : pageOptions[0],
@@ -313,6 +344,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
       globalFilter,
       grouping,
       pagination,
+      sorting,
     },
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
@@ -325,6 +357,7 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
     onGroupingChange: setGrouping,
+    onSortingChange: setSorting,
     onPaginationChange: setPagination,
     getGroupedRowModel: getGroupedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
