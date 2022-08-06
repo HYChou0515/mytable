@@ -19,11 +19,12 @@ import {
   Header,
   Row,
 } from "@tanstack/react-table";
+import * as _ from "lodash";
 import { FaAngleDown, FaAngleRight } from "react-icons/fa";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { getTextWidth, getCanvasFont } from "../../utils/textWidth";
 import "react-perfect-scrollbar/dist/css/styles.css";
-import Filter, { modifyColumnsFilterFn } from "./Filter";
+import Filter, { modifyColumnsFilterFn, multipleFilter } from "./Filter";
 import {
   DataGridProps,
   DivTableBodyCellProps,
@@ -34,6 +35,7 @@ import {
 } from "./types";
 import { TableContext } from "./context";
 import VirtualList from "./VirtualList";
+import rankings from "../../utils/rankings";
 // Objectives
 // [V] 1. show data in data grid
 // [V] 2. filter at column header
@@ -276,18 +278,31 @@ function DivTableBodyCell<ObjT>(
 }
 
 function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
-  const data = props.data;
+  const [data, setData] = React.useState(props.data);
   const columns = props.columns.map(modifyColumnsFilterFn);
   const pageOptions = props.pageOptions ?? [10, 20, 30, 40, 50];
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [grouping, setGrouping] = React.useState<GroupingState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: pageOptions === "one-page" ? data.length : pageOptions[0],
   });
+  const [internalIndex, setInternalIndex] = React.useState<
+    (number | undefined)[]
+  >(_.range(1, data.length + 1));
+  if (props.indexing != null) {
+    columns.unshift({
+      accessorFn: (_, i) => internalIndex[i] ?? null,
+      header: props.indexing.header,
+      filterFn: multipleFilter,
+      aggregationFn: props.indexing.aggregationFn,
+      aggregatedCell: props.indexing.aggregatedCell,
+    });
+  }
   const table = useReactTable<ObjT>({
     data,
     columns,
@@ -345,9 +360,35 @@ function DataGrid<ObjT>(props: React.PropsWithChildren<DataGridProps<ObjT>>) {
     });
     table.setColumnSizing(columnSizing);
   };
+
+  const [rankingMode, setRankingMode] = React.useState("score");
+  const calRanking = (): (number | undefined)[] => {
+    let ret: (number | undefined)[] = _.range(1, data.length + 1);
+    if (rankingMode === "score") {
+      const flatRows = table.getFilteredRowModel().flatRows;
+      const ranks = rankings(flatRows, {
+        sortBy: { desc: (x) => x.getValue("score") },
+        method: "min",
+      });
+      ret = ret.map(() => undefined);
+      for (const i of _.range(flatRows.length)) {
+        ret[flatRows[i].index] = ranks[i];
+      }
+    }
+    return ret;
+  };
+
   return (
     <TableContext.Provider value={{ onAutoSizeColumn }}>
       <div>
+        <button
+          onClick={() => {
+            setInternalIndex(calRanking());
+            setData([...data]);
+          }}
+        >
+          Re-rank
+        </button>
         <div>
           <DivTable<ObjT>>
             <DivTableHead table={table} />

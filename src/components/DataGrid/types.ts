@@ -1,4 +1,5 @@
 import { Cell, ColumnDef, Header, Row, Table } from "@tanstack/react-table";
+import { GroupingColumnDef } from "@tanstack/table-core";
 
 export type DivTableBodyCellProps<ObjT> = {
   cell: Cell<ObjT, unknown>;
@@ -8,6 +9,9 @@ export type DataGridProps<ObjT> = {
   data: ObjT[];
   columns: ColumnDef<ObjT>[];
   pageOptions?: number[] | "one-page";
+  indexing?: {
+    header: string;
+  } & GroupingColumnDef<ObjT, unknown>;
 };
 
 export type TextualFilterMatchModes = keyof {

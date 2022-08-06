@@ -211,6 +211,11 @@ const DataReport = () => {
           data={data}
           columns={dataColumns}
           pageOptions={"one-page"}
+          indexing={{
+            header: "Rank",
+            aggregationFn: "min",
+            aggregatedCell: (props) => <span>best: {props.renderValue()}</span>,
+          }}
         />
       </div>
     </PlotPopoverHoverContext.Provider>
