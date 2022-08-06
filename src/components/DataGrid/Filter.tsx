@@ -36,7 +36,7 @@ export const multipleFilter: FilterFn<any> = (
       if (max != null && max < rowValue) return false;
       return !Number.isNaN(Number(rowValue));
     }
-    return min == null && max == null;
+    return false;
   }
   if (value.activated === "selection") {
     const filterValue = value.filterValues[value.activated];
@@ -438,7 +438,7 @@ const getNumericFilterPanel = ({
       }}
     >
       {minValue == null && maxValue == null
-        ? "(all)"
+        ? `(all) ${facetMin} ~ ${facetMax}`
         : minValue == null
         ? `≤ ${maxValue}`
         : maxValue == null
