@@ -21,7 +21,10 @@ export type TextualFilterMatchModes = keyof {
 };
 export type MultipleFilterFunctions = {
   numericFilter: [number | null, number | null];
-  selection: { [value: string]: "selected" | "unselected" };
+  selection: {
+    values: { [value: string]: "selected" | "unselected" };
+    blank: "selected" | "unselected";
+  };
   textualFilter: {
     matchMode: TextualFilterMatchModes;
     matchCase: boolean;

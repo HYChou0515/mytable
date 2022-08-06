@@ -30,20 +30,25 @@ export const multipleFilter: FilterFn<any> = (
   if (value.activated === "numericFilter") {
     const filterValue = value.filterValues[value.activated];
     const [min, max] = filterValue;
-    const rowValue = row.getValue(columnId) as number;
-    if (min != null && min > rowValue) return false;
-    if (max != null && max < rowValue) return false;
-    return true;
+    let rowValue = row.getValue(columnId);
+    if (typeof rowValue === "number" || typeof rowValue === "string") {
+      if (min != null && min > rowValue) return false;
+      if (max != null && max < rowValue) return false;
+      return !Number.isNaN(Number(rowValue));
+    }
+    return min == null && max == null;
   }
   if (value.activated === "selection") {
     const filterValue = value.filterValues[value.activated];
     let rowValue = row.getValue(columnId);
     if (typeof rowValue === "number") {
       rowValue = String(rowValue);
+    } else if (rowValue == null) {
+      return filterValue.blank === "selected";
     } else if (typeof rowValue !== "string") {
       return false;
     }
-    return filterValue[rowValue as string] === "selected";
+    return filterValue.values[rowValue as string] === "selected";
   }
   if (value.activated === "textualFilter") {
     const {
@@ -136,20 +141,22 @@ const SelectionPanel = ({
   checkedState,
 }: {
   column: Column<any, unknown>;
-  allValues: string[];
+  allValues: (string | null)[];
   columnFilterValue: MultipleFilterValue;
-  sortedUniqueValues: string[];
-  selected: string[];
+  sortedUniqueValues: (string | null)[];
+  selected: (string | null)[];
   checkedState: "empty" | "full" | "intermediate";
 }) => {
   const rowHeight = 24;
-  const shownAndSelected = sortedUniqueValues.filter((s) =>
-    selected.includes(s)
-  );
+  const shownAndSelected = sortedUniqueValues.filter(
+    (s) => s != null && selected.includes(s)
+  ) as string[];
   const [optionFilterValue, setOptionalFilterValue] = useState("");
   const optionsFiltered = sortedUniqueValues.filter(
-    (v) => rankItem(v, optionFilterValue).passed
-  );
+    (v) => v != null && rankItem(v, optionFilterValue).passed
+  ) as string[];
+  const selectValues = columnFilterValue.filterValues.selection.values;
+  const blank = columnFilterValue.filterValues.selection.blank;
 
   return (
     <div className={"tab-panel"}>
@@ -164,13 +171,20 @@ const SelectionPanel = ({
               ...columnFilterValue.filterValues,
               selection: {
                 ...columnFilterValue.filterValues.selection,
-                ...sortedUniqueValues.reduce(
-                  (pre, cur) => ({
-                    ...pre,
-                    [cur]: s.includes(cur) ? "selected" : "unselected",
-                  }),
-                  {}
-                ),
+                values: {
+                  ...columnFilterValue.filterValues.selection.values,
+                  ...sortedUniqueValues
+                    .filter((s) => s != null)
+                    .reduce(
+                      (pre, cur) => ({
+                        ...pre,
+                        [cur as string]: s.includes(cur as string)
+                          ? "selected"
+                          : "unselected",
+                      }),
+                      {}
+                    ),
+                },
               },
             },
           } as MultipleFilterValue);
@@ -186,7 +200,9 @@ const SelectionPanel = ({
         <Listbox.Options static className="selection-list">
           <VirtualList<string[]>
             itemData={optionsFiltered}
-            itemCount={optionsFiltered.length + 1}
+            itemCount={
+              optionsFiltered.length + 1 + (allValues.includes(null) ? 1 : 0)
+            }
             itemSize={rowHeight}
             height={rowHeight * 7}
             width={"100%"}
@@ -208,10 +224,20 @@ const SelectionPanel = ({
                             ...columnFilterValue.filterValues,
                             selection: {
                               ...columnFilterValue.filterValues.selection,
-                              ...sortedUniqueValues.reduce(
-                                (pre, cur) => ({ ...pre, [cur]: "unselected" }),
-                                {}
-                              ),
+                              values: {
+                                ...columnFilterValue.filterValues.selection
+                                  .values,
+                                ...sortedUniqueValues
+                                  .filter((s) => s != null)
+                                  .reduce(
+                                    (pre, cur) => ({
+                                      ...pre,
+                                      [cur as string]: "unselected",
+                                    }),
+                                    {}
+                                  ),
+                              },
+                              blank: "unselected",
                             },
                           },
                         } as MultipleFilterValue);
@@ -223,10 +249,20 @@ const SelectionPanel = ({
                             ...columnFilterValue.filterValues,
                             selection: {
                               ...columnFilterValue.filterValues.selection,
-                              ...allValues.reduce(
-                                (pre, cur) => ({ ...pre, [cur]: "selected" }),
-                                {}
-                              ),
+                              values: {
+                                ...columnFilterValue.filterValues.selection
+                                  .values,
+                                ...sortedUniqueValues
+                                  .filter((s) => s != null)
+                                  .reduce(
+                                    (pre, cur) => ({
+                                      ...pre,
+                                      [cur as string]: "selected",
+                                    }),
+                                    {}
+                                  ),
+                              },
+                              blank: "selected",
                             },
                           },
                         } as MultipleFilterValue);
@@ -244,7 +280,51 @@ const SelectionPanel = ({
                   </li>
                 );
               }
-              const v = data[index - 1];
+              if (index === 1 && allValues.includes(null)) {
+                return (
+                  <li
+                    key={`selection-list-item`}
+                    className={`selection-list-item ${
+                      blank === "selected" && "selected"
+                    }`}
+                    onClick={() => {
+                      if (blank === "selected") {
+                        column.setFilterValue({
+                          ...columnFilterValue,
+                          activated: "selection",
+                          filterValues: {
+                            ...columnFilterValue.filterValues,
+                            selection: {
+                              ...columnFilterValue.filterValues.selection,
+                              blank: "unselected",
+                            },
+                          },
+                        } as MultipleFilterValue);
+                      } else if (blank === "unselected") {
+                        column.setFilterValue({
+                          ...columnFilterValue,
+                          activated: "selection",
+                          filterValues: {
+                            ...columnFilterValue.filterValues,
+                            selection: {
+                              ...columnFilterValue.filterValues.selection,
+                              blank: "selected",
+                            },
+                          },
+                        } as MultipleFilterValue);
+                      }
+                    }}
+                  >
+                    {blank === "selected" ? (
+                      <BiCheckboxChecked className={"list-checked-icon"} />
+                    ) : (
+                      <BiCheckbox className={"list-checked-icon"} />
+                    )}
+                    <span>(Blank)</span>
+                  </li>
+                );
+              }
+              const v = data[index - 1 - (allValues.includes(null) ? 1 : 0)];
               return (
                 <Listbox.Option key={v} value={v} as={Fragment}>
                   {({ active, selected }) => (
@@ -280,13 +360,21 @@ const getSelectionPanel = ({
   sortedUniqueValues,
 }: {
   column: Column<any, unknown>;
-  allValues: string[];
+  allValues: (string | null)[];
   columnFilterValue: MultipleFilterValue;
-  sortedUniqueValues: string[];
+  sortedUniqueValues: (string | null)[];
 }) => {
-  const selected = Object.entries(columnFilterValue.filterValues.selection)
-    .filter(([k, v]) => v === "selected")
+  const selected: (string | null)[] = Object.entries(
+    columnFilterValue.filterValues.selection.values
+  )
+    .filter(([k, v]) => v === "selected" && allValues.includes(k))
     .map(([k, v]) => k);
+  if (
+    columnFilterValue.filterValues.selection.blank === "selected" &&
+    allValues.includes(null)
+  ) {
+    selected.push(null);
+  }
   const checkedState =
     selected.length === 0
       ? "empty"
@@ -309,7 +397,9 @@ const getSelectionPanel = ({
         ? "(empty)"
         : selected.length === 1
         ? selected[0]
-        : `(${selected.length}) ${selected.join(", ")}`}
+        : `(${selected.length}) ${(selected.includes(null) ? ["(Blank)"] : [])
+            .concat(selected.filter((s) => s != null) as string[])
+            .join(", ")}`}
     </div>
   );
   return [
@@ -554,24 +644,31 @@ function Filter({
             table
               .getPreFilteredRowModel()
               .flatRows.map((r) => r.getValue(column.id))
-              .filter((s) => typeof s === "number" || typeof s === "string")
+              .filter(
+                (s) =>
+                  typeof s === "number" || typeof s === "string" || s == null
+              )
           )
         )
       )
         .asc()
-        .map(String),
+        .map((s) => (s == null ? null : String(s))),
     [table.getPreFilteredRowModel()]
   );
-
   const defaultColumnFilterValue: MultipleFilterValue = React.useMemo(
     () => ({
       activated: "selection",
       filterValues: {
         numericFilter: [null, null],
-        selection: allValues.reduce(
-          (pre, cur) => ({ ...pre, [cur]: "selected" }),
-          {}
-        ),
+        selection: {
+          values: allValues
+            .filter((s) => s != null)
+            .reduce(
+              (pre, cur) => ({ ...pre, [cur as string]: "selected" }),
+              {}
+            ),
+          blank: "selected",
+        },
         textualFilter: {
           matchMode: "normal",
           search: "",
@@ -586,11 +683,11 @@ function Filter({
     () =>
       sort(
         Array.from(column.getFacetedUniqueValues().keys()).filter(
-          (s) => typeof s === "number" || typeof s === "string"
+          (s) => typeof s === "number" || typeof s === "string" || s == null
         )
       )
         .asc()
-        .map(String),
+        .map((s) => (s == null ? null : String(s))),
     [column.getFacetedUniqueValues()]
   );
   let columnFilterValue = column.getFilterValue() as MultipleFilterValue;

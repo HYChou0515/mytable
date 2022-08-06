@@ -178,7 +178,7 @@ const dataColumns: ColumnDef<RootCauseItemBody>[] = [
   },
 ];
 
-const DataContext = createContext(makeData(2000));
+const DataContext = createContext(makeData(20));
 
 const DataReport = () => {
   const data = useContext(DataContext);
